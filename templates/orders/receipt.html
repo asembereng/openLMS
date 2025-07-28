@@ -1,0 +1,595 @@
+{% load static %}
+{% load currency_format %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - {{ order.order_number }}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .receipt-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .receipt {
+            padding: 30px;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .company-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .receipt-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            color: #34495e;
+        }
+        
+        .info-section {
+            margin: 20px 0;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .items-section {
+            margin: 30px 0;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            padding: 20px 0;
+        }
+        
+        .items-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px dotted #bdc3c7;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .item-pieces {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .item-price {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .summary-section {
+            margin: 20px 0;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+        
+        .summary-row.total {
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 15px 0;
+            color: #2c3e50;
+        }
+        
+        .notes-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            background: #34495e;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .action-buttons .btn {
+            margin: 5px;
+            min-width: 140px;
+        }
+        
+        .whatsapp-info {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .whatsapp-info.show {
+            display: block;
+        }
+        
+        .whatsapp-validation {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .whatsapp-validation.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .whatsapp-validation.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .receipt-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .action-buttons {
+                display: none !important;
+            }
+            
+            .whatsapp-info {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt" id="receipt-content">
+            <div class="header">
+                <div class="company-name">{{ system_config.company_name|default:"A&F Laundry Services" }}</div>
+                {% if system_config.company_address %}
+                    <div class="company-info">{{ system_config.company_address }}</div>
+                {% endif %}
+                {% if system_config.company_phone %}
+                    <div class="company-info">Phone: {{ system_config.company_phone }}</div>
+                {% endif %}
+                {% if system_config.company_email %}
+                    <div class="company-info">Email: {{ system_config.company_email }}</div>
+                {% endif %}
+            </div>
+
+            <div class="receipt-title">RECEIPT</div>
+
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Receipt Number:</span>
+                    <span>{{ receipt.receipt_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Order Number:</span>
+                    <span>{{ order.order_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span>{{ order.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Customer:</span>
+                    <span>{{ order.customer.name }}</span>
+                </div>
+                {% if order.customer.phone %}
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span>{{ order.customer.phone }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span>{{ order.get_status_display }}</span>
+                </div>
+                {% if order.expected_completion %}
+                <div class="info-row">
+                    <span class="info-label">Expected Completion:</span>
+                    <span>{{ order.expected_completion|date:"M d, Y H:i" }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="items-section">
+                <div class="items-header">ORDER DETAILS</div>
+                {% for line in lines %}
+                <div class="item-row">
+                    <div class="item-details">
+                        <div class="item-name">{{ line.service.name }}</div>
+                        <div class="item-pieces">{{ line.pieces }} piece{{ line.pieces|pluralize }}</div>
+                    </div>
+                    <div class="item-price">{{ line.line_total|currency }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="summary-section">
+                <div class="summary-row">
+                    <span>Total Pieces:</span>
+                    <span>{% for line in lines %}{{ line.pieces }}{% if not forloop.last %} + {% endif %}{% endfor %}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>{{ order.subtotal|currency }}</span>
+                </div>
+                {% if order.discount_amount and order.discount_amount > 0 %}
+                <div class="summary-row">
+                    <span>Discount:</span>
+                    <span>-{{ order.discount_amount|currency }}</span>
+                </div>
+                {% endif %}
+                {% if order.loyalty_discount_amount and order.loyalty_discount_amount > 0 %}
+                <div class="summary-row">
+                    <span>Loyalty Discount ({{ order.redeemed_points }} pts):</span>
+                    <span>-{{ order.loyalty_discount_amount|currency }}</span>
+                </div>
+                {% endif %}
+                <div class="summary-row total">
+                    <span>TOTAL:</span>
+                    <span>{{ order.total_amount|currency }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Payment Method:</span>
+                    <span>{{ order.payment_method.name }}</span>
+                </div>
+            </div>
+
+            {% if order.notes or order.special_instructions %}
+            <div class="notes-section">
+                {% if order.notes %}
+                    <div><strong>Notes:</strong></div>
+                    <div>{{ order.notes }}</div>
+                {% endif %}
+                {% if order.special_instructions %}
+                    <div><strong>Special Instructions:</strong></div>
+                    <div>{{ order.special_instructions }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="footer">
+                <div><strong>Thank you for your business!</strong></div>
+                <div style="margin-top: 10px; font-size: 12px;">
+                    Generated: {{ receipt.generated_at|date:"M d, Y H:i" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                <i class="fas fa-print"></i> Print Receipt
+            </button>
+            
+            <div class="btn-group" role="group">
+                <a href="{% url 'orders:receipt_pdf' order.pk %}" class="btn btn-danger" target="_blank">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </a>
+                <a href="{% url 'orders:receipt_png' order.pk %}" class="btn btn-warning" target="_blank">
+                    <i class="fas fa-image"></i> Download PNG
+                </a>
+            </div>
+            
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i> Share via WhatsApp
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="shareViaWhatsApp('text')">
+                        <i class="fas fa-comment"></i> Text Only
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="shareViaWhatsApp('pdf')">
+                        <i class="fas fa-file-pdf"></i> With PDF Receipt
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="shareViaWhatsApp('png')">
+                        <i class="fas fa-image"></i> With Image Receipt
+                    </a></li>
+                </ul>
+            </div>
+            
+            <a href="{% url 'orders:list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Orders
+            </a>
+        </div>
+
+        <!-- WhatsApp validation info -->
+        <div class="whatsapp-info" id="whatsapp-info">
+            <h6><i class="fab fa-whatsapp"></i> WhatsApp Sharing</h6>
+            <div id="whatsapp-validation"></div>
+            <div id="whatsapp-format-info" style="display: none;">
+                <div class="alert alert-info">
+                    <strong>Sharing Format:</strong> <span id="selected-format"></span>
+                </div>
+            </div>
+            <div id="whatsapp-actions" style="display: none;">
+                <button type="button" class="btn btn-success btn-sm" onclick="openWhatsApp()">
+                    <i class="fab fa-whatsapp"></i> Open WhatsApp
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="openWhatsAppWeb()">
+                    <i class="fas fa-globe"></i> Open WhatsApp Web
+                </button>
+                <div id="download-links" style="margin-top: 10px; display: none;">
+                    <small class="text-muted">Download links:</small><br>
+                    <a id="pdf-download-link" href="#" class="btn btn-sm btn-outline-danger" style="display: none;" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </a>
+                    <a id="png-download-link" href="#" class="btn btn-sm btn-outline-warning" style="display: none;" target="_blank">
+                        <i class="fas fa-image"></i> Download PNG
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let whatsappData = null;
+
+        // Print functionality
+        function printReceipt() {
+            window.print();
+        }
+
+        // WhatsApp sharing functionality
+        async function shareViaWhatsApp(format = 'text') {
+            console.log('shareViaWhatsApp function called with format:', format);
+            const whatsappBtn = document.getElementById('whatsapp-btn');
+            const whatsappInfo = document.getElementById('whatsapp-info');
+            const whatsappValidation = document.getElementById('whatsapp-validation');
+            const whatsappActions = document.getElementById('whatsapp-actions');
+            const whatsappFormatInfo = document.getElementById('whatsapp-format-info');
+            const selectedFormat = document.getElementById('selected-format');
+            const downloadLinks = document.getElementById('download-links');
+            const pdfLink = document.getElementById('pdf-download-link');
+            const pngLink = document.getElementById('png-download-link');
+            
+            console.log('Elements found:', {
+                whatsappBtn: !!whatsappBtn,
+                whatsappInfo: !!whatsappInfo,
+                whatsappValidation: !!whatsappValidation,
+                whatsappActions: !!whatsappActions
+            });
+
+            // Show format selection
+            selectedFormat.textContent = format.charAt(0).toUpperCase() + format.slice(1);
+            whatsappFormatInfo.style.display = 'block';
+
+            // Show loading state
+            whatsappBtn.disabled = true;
+            const originalText = whatsappBtn.innerHTML;
+            whatsappBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            
+            try {
+                // First validate the phone number
+                console.log('Fetching validation URL: {% url 'orders:whatsapp_validate' order.pk %}');
+                const validateResponse = await fetch(`{% url 'orders:whatsapp_validate' order.pk %}`);
+                console.log('Validate response status:', validateResponse.status);
+                const validateData = await validateResponse.json();
+                console.log('Validate data:', validateData);
+
+                whatsappInfo.classList.add('show');
+
+                if (validateData.success && validateData.is_valid) {
+                    // Show success validation
+                    whatsappValidation.className = 'whatsapp-validation success';
+                    whatsappValidation.innerHTML = `
+                        <div><strong>✓ Valid Phone Number</strong></div>
+                        <div>Number: ${validateData.formatted_number}</div>
+                        <div>Type: ${validateData.is_mobile ? 'Mobile' : 'Landline'}</div>
+                        ${validateData.carrier ? `<div>Carrier: ${validateData.carrier}</div>` : ''}
+                        ${validateData.location ? `<div>Location: ${validateData.location}</div>` : ''}
+                        <div><em>${validateData.whatsapp_message}</em></div>
+                    `;
+
+                    // Now prepare WhatsApp sharing with the selected format
+                    let shareUrl;
+                    if (format === 'text') {
+                        shareUrl = '{% url 'orders:whatsapp_share' order.pk %}';
+                    } else {
+                        shareUrl = '{% url 'orders:whatsapp_share_attachment' order.pk %}' + '?format=' + format;
+                    }
+                    
+                    console.log('Fetching share URL:', shareUrl);
+                    const shareResponse = await fetch(shareUrl);
+                    console.log('Share response status:', shareResponse.status);
+                    const shareData = await shareResponse.json();
+                    console.log('Share data:', shareData);
+                    console.log('Share data format:', shareData.format);
+                    console.log('Share data attachment:', shareData.attachment);
+
+                    if (shareData.success) {
+                        whatsappData = shareData;
+                        whatsappActions.style.display = 'block';
+                        console.log('WhatsApp actions should now be visible');
+                        
+                        // Show download links if attachment is available
+                        if (shareData.attachment) {
+                            downloadLinks.style.display = 'block';
+                            if (shareData.attachment.type === 'pdf') {
+                                pdfLink.href = shareData.attachment.download_url;
+                                pdfLink.style.display = 'inline-block';
+                                pngLink.style.display = 'none';
+                            } else if (shareData.attachment.type === 'png') {
+                                pngLink.href = shareData.attachment.download_url;
+                                pngLink.style.display = 'inline-block';
+                                pdfLink.style.display = 'none';
+                            }
+                        } else {
+                            downloadLinks.style.display = 'none';
+                        }
+                        
+                        whatsappValidation.innerHTML += `
+                            <div style="margin-top: 10px;">
+                                <strong>Ready to share receipt!</strong>
+                                ${shareData.attachment ? `<br><small>Format: ${shareData.attachment.type.toUpperCase()}</small>` : ''}
+                            </div>
+                        `;
+                    } else {
+                        console.error('Share data error:', shareData.error);
+                        throw new Error(shareData.error || 'Failed to prepare WhatsApp message');
+                    }
+                } else {
+                    // Show error validation
+                    whatsappValidation.className = 'whatsapp-validation error';
+                    whatsappValidation.innerHTML = `
+                        <div><strong>✗ Phone Number Issue</strong></div>
+                        <div>${validateData.error || 'Invalid phone number'}</div>
+                        <div><em>Please update the customer's phone number to use WhatsApp sharing.</em></div>
+                    `;
+                }
+            } catch (error) {
+                console.error('WhatsApp sharing error:', error);
+                whatsappValidation.className = 'whatsapp-validation error';
+                whatsappValidation.innerHTML = `
+                    <div><strong>✗ Error</strong></div>
+                    <div>${error.message}</div>
+                `;
+                whatsappInfo.classList.add('show');
+            } finally {
+                // Reset button
+                whatsappBtn.disabled = false;
+                whatsappBtn.innerHTML = originalText;
+            }
+        }
+
+        function openWhatsApp() {
+            if (whatsappData && whatsappData.whatsapp_url) {
+                window.open(whatsappData.whatsapp_url, '_blank');
+            }
+        }
+
+        function openWhatsAppWeb() {
+            if (whatsappData) {
+                // Use the format from whatsappData if available
+                const format = whatsappData.format || 'text';
+                let shareUrl;
+                
+                if (format === 'text') {
+                    shareUrl = '{% url 'orders:whatsapp_share' order.pk %}' + '?web=true';
+                } else {
+                    shareUrl = '{% url 'orders:whatsapp_share_attachment' order.pk %}' + '?format=' + format + '&web=true';
+                }
+                
+                // Generate web URL
+                fetch(shareUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.open(data.whatsapp_url, '_blank');
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error generating WhatsApp Web URL: ' + error.message);
+                    });
+            }
+        }
+
+        // Auto-print functionality (optional)
+        window.onload = function() {
+            console.log('Page loaded, JavaScript is working');
+            
+            // Test URL construction
+            const orderId = {{ order.pk }};
+            console.log('Order ID:', orderId);
+            
+            const testTextUrl = '{% url 'orders:whatsapp_share' order.pk %}';
+            const testPngUrl = '{% url 'orders:whatsapp_share_attachment' order.pk %}' + '?format=png';
+            const testPdfUrl = '{% url 'orders:whatsapp_share_attachment' order.pk %}' + '?format=pdf';
+            
+            console.log('Test URLs:');
+            console.log('- Text:', testTextUrl);
+            console.log('- PNG:', testPngUrl);
+            console.log('- PDF:', testPdfUrl);
+            
+            // Test function definition
+            window.testWhatsApp = function() {
+                alert('Test function works!');
+            };
+        }
+    </script>
+</body>
+</html>

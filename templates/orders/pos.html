@@ -1,0 +1,897 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Point of Sale - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* General Styles */
+    body {
+        background-color: #f4f7fa;
+    }
+
+    .container-fluid {
+        max-width: 1200px;
+    }
+
+    .card {
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        font-weight: 500;
+        padding: 1rem;
+    }
+
+    .card-body {
+        background-color: white;
+        padding: 1.5rem;
+    }
+
+    .text-primary {
+        color: #007bff !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .fw-bold {
+        font-weight: 700;
+    }
+
+    /* POS Layout */
+    .pos-desktop {
+        margin-top: 2rem;
+    }
+
+    .pos-desktop .row {
+        margin-bottom: 1.5rem;
+    }
+
+    .services-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .service-card {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .service-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .service-name {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .service-price {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .service-unit {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .customer-section {
+        margin-bottom: 1rem;
+    }
+
+    .loyalty-points-display {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-cart {
+        padding: 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .empty-cart i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .summary-row {
+        font-size: 0.9rem;
+        padding: 0.5rem 0;
+    }
+
+    .summary-row:last-child {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* Checkout Button */
+    #checkout-btn {
+        background-color: #28a745;
+        color: white;
+        font-weight: 500;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    #checkout-btn:hover {
+        background-color: #218838;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .pos-desktop .row {
+            flex-direction: column;
+        }
+
+        .services-list {
+            max-height: 400px;
+        }
+
+        .summary-row {
+            font-size: 0.8rem;
+        }
+
+        #checkout-btn {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!--
+Redesigned POS Desktop Layout
+- Responsive two-column layout
+- Left: Service selection (grouped by category, search/filter, modern grid)
+- Right: Cart, customer, loyalty, summary, checkout
+- Modern, mobile-friendly, accessible
+-->
+<div class="container-fluid pos-desktop mt-4">
+  <div class="row g-4">
+    <!-- Left: Services -->
+    <div class="col-lg-7 col-xl-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+          <span><i class="fas fa-tshirt me-2"></i>Services</span>
+          <input type="text" class="form-control form-control-sm w-auto ms-auto" id="service-search" placeholder="Search services...">
+        </div>
+        <div class="card-body p-0">
+          <div class="services-list px-3 py-2">
+            {% if services_by_category %}
+              {% for category, services in services_by_category.items %}
+                <div class="mb-4">
+                  <h5 class="text-primary mb-2"><i class="fas fa-folder-open me-1"></i>{{ category.name }}</h5>
+                  <div class="row g-3">
+                    {% for service in services %}
+                      <div class="col-6 col-md-4 col-lg-3">
+                        <div class="service-card h-100 p-3 border rounded shadow-sm text-center bg-light service-selectable" data-service-id="{{ service.id }}" data-service-name="{{ service.name }}" data-unit-price="{{ service.unit_price }}">
+                          <div class="service-name mb-2">{{ service.name }}</div>
+                          <div class="service-price text-success fw-bold">{{ service.price_per_dozen|currency }}/dz</div>
+                          <div class="service-unit text-muted">{{ service.unit_price|currency }}/pc</div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="alert alert-warning">No services available. Please add services in the admin panel.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Right: Cart, Customer, Summary -->
+    <div class="col-lg-5 col-xl-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white"><i class="fas fa-shopping-cart me-2"></i>Cart</div>
+        <div class="card-body">
+          <!-- Customer selection and add new button -->
+          <div class="customer-section mb-3">
+            <label for="customer-select" class="form-label">Customer <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <select class="form-select" id="customer-select" name="customer" required>
+                <option value="">Select customer...</option>
+                {% for customer in customers %}
+                  <option value="{{ customer.id }}">{{ customer.name }}{% if customer.phone %} ({{ customer.phone }}){% endif %}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-outline-primary" id="add-customer-btn" data-bs-toggle="modal" data-bs-target="#customerCreateModal">
+                <i class="fas fa-user-plus"></i> Add New
+              </button>
+            </div>
+          </div>
+          <!-- Loyalty points display -->
+          <div class="loyalty-points-display mb-3 d-flex align-items-center">
+            <i class="fas fa-gift text-warning me-2"></i>
+            <span>Points: <strong id="loyalty-points">0</strong></span>
+            <button type="button" class="btn btn-link btn-sm ms-2" id="refresh-loyalty-btn" title="Refresh points"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <!-- Cart items -->
+          <div id="cart-items" class="mb-3">
+            <div class="empty-cart text-center text-muted">No items in cart.</div>
+          </div>
+          <!-- Cart summary -->
+          <div class="cart-summary mb-3">
+            <div class="summary-row d-flex justify-content-between">
+              <span>Subtotal:</span>
+              <span id="cart-subtotal">0</span>
+            </div>
+            <div class="summary-row d-flex justify-content-between">
+              <span>Discount:</span>
+              <span id="cart-discount">0</span>
+            </div>
+            <div class="summary-row d-flex justify-content-between">
+              <span>Loyalty Discount:</span>
+              <span id="cart-loyalty-discount">0</span>
+            </div>
+            <div class="summary-row d-flex justify-content-between fw-bold border-top pt-2">
+              <span>Total:</span>
+              <span id="cart-total">0</span>
+            </div>
+          </div>
+          <!-- Checkout button -->
+          <button type="submit" class="btn btn-success w-100" id="checkout-btn"><i class="fas fa-cash-register me-2"></i>Checkout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Confirmation Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="orderSummary"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmOrderBtn">
+                    <i class="fas fa-check"></i> Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Creation Modal -->
+{% include "customers/customer_create_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// POS System JavaScript
+// Define currency symbol from Django template context
+const currencySymbol = "{{ CURRENCY_SYMBOL }}";
+class POSSystem {
+    constructor() {
+        this.selectedCustomer = null;
+        this.cartItems = new Map();
+        this.services = [];
+        this.init();
+    }
+
+    async init() {
+        await this.loadServices();
+        this.setupEventListeners();
+        this.renderServices();
+        
+        // Check for cart state restoration (returning from customer creation)
+        this.restoreCartState();
+    }
+
+    async loadServices() {
+        try {
+            const response = await fetch('/services/api/');
+            const data = await response.json();
+            this.services = data.results || data;
+        } catch (error) {
+            console.error('Error loading services:', error);
+            this.services = [];
+        }
+    }
+
+    setupEventListeners() {
+        // Customer search
+        const customerSearch = document.getElementById('customerSearch');
+        let searchTimeout;
+        
+        customerSearch.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.searchCustomers(e.target.value);
+            }, 300);
+        });
+
+        // Checkout button
+        document.getElementById('checkoutBtn').addEventListener('click', () => {
+            this.showOrderConfirmation();
+        });
+
+        // Confirm order button
+        document.getElementById('confirmOrderBtn').addEventListener('click', () => {
+            this.createOrder();
+        });
+
+        // Click outside to hide suggestions
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.customer-search')) {
+                document.getElementById('customerSuggestions').style.display = 'none';
+            }
+        });
+    }
+
+    renderServices() {
+        const grid = document.getElementById('servicesGrid');
+        
+        if (this.services.length === 0) {
+            grid.innerHTML = '<div class="text-center p-4"><p>No services available</p></div>';
+            return;
+        }
+
+        grid.innerHTML = this.services.map(service => `
+            <div class="service-card" data-service-id="${service.id}" onclick="pos.addToCart(${service.id})">
+                <div class="service-name">${service.name}</div>
+                <div class="service-price">${currencySymbol}${parseFloat(service.price_per_dozen).toFixed(2)}</div>
+                <div class="service-unit">per dozen</div>
+            </div>
+        `).join('');
+    }
+
+    async searchCustomers(query) {
+        const suggestions = document.getElementById('customerSuggestions');
+        
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/customers/api/?search=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            const customers = data.results || data;
+            
+            let html = '';
+            
+            if (customers.length > 0) {
+                html = customers.map(customer => `
+                    <div class="customer-suggestion" onclick="pos.selectCustomer(${customer.id}, '${customer.name}', '${customer.phone}', '${customer.email || ''}')">
+                        <div class="suggestion-name">${customer.name}</div>
+                        <div class="suggestion-phone">${customer.phone}</div>
+                    </div>
+                `).join('');
+            } else {
+                html = '<div class="no-results">No customers found matching your search.</div>';
+            }
+            
+            // Always add the "Create New Customer" option
+            html += `
+                <div class="customer-suggestion create-new" onclick="pos.createNewCustomer('${query.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-user-plus"></i>
+                    Create New Customer${query.length >= 2 ? ` for "${query}"` : ''}
+                </div>
+            `;
+            
+            suggestions.innerHTML = html;
+            suggestions.style.display = 'block';
+        } catch (error) {
+            console.error('Error searching customers:', error);
+            // Still show create new customer option even if search fails
+            suggestions.innerHTML = `
+                <div class="no-results">Error searching customers.</div>
+                <div class="customer-suggestion create-new" onclick="pos.createNewCustomer('${query.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-user-plus"></i>
+                    Create New Customer${query.length >= 2 ? ` for "${query}"` : ''}
+                </div>
+            `;
+            suggestions.style.display = 'block';
+        }
+    }
+
+    selectCustomer(id, name, phone, email) {
+        this.selectedCustomer = { id, name, phone, email };
+        
+        document.getElementById('customerSearch').value = name;
+        document.getElementById('customerSuggestions').style.display = 'none';
+        
+        const customerInfo = document.getElementById('customerInfo');
+        document.getElementById('customerName').textContent = name;
+        document.getElementById('customerDetails').textContent = `${phone}${email ? ' • ' + email : ''}`;
+        customerInfo.classList.add('active');
+        
+        this.updateCheckoutButton();
+        this.fetchCustomerLoyaltyPoints(id);
+    }
+
+    async fetchCustomerLoyaltyPoints(customerId) {
+        try {
+            const response = await fetch(`/orders/api/customer-points/?customer_id=${customerId}`);
+            const data = await response.json();
+            const loyaltyPoints = data.loyalty_points || 0;
+            
+            document.getElementById('loyaltyPointsValue').textContent = loyaltyPoints;
+            document.getElementById('loyaltyPointsDisplay').style.display = loyaltyPoints > 0 ? 'block' : 'none';
+        } catch (error) {
+            console.error('Error fetching customer loyalty points:', error);
+        }
+    }
+
+    createNewCustomer(searchQuery = '') {
+        // Hide suggestions
+        document.getElementById('customerSuggestions').style.display = 'none';
+        
+        // Store current cart state in session storage to restore after customer creation
+        const cartState = {
+            cartItems: Array.from(this.cartItems.entries()),
+            searchQuery: searchQuery
+        };
+        sessionStorage.setItem('posCartState', JSON.stringify(cartState));
+        
+        // Redirect to customer creation form with return URL
+        const currentUrl = encodeURIComponent(window.location.href);
+        const customerCreateUrl = `/customers/create/?next=${currentUrl}&name=${encodeURIComponent(searchQuery)}`;
+        
+        window.location.href = customerCreateUrl;
+    }
+
+    // Method to restore cart state when returning from customer creation
+    restoreCartState() {
+        const cartState = sessionStorage.getItem('posCartState');
+        if (cartState) {
+            try {
+                const state = JSON.parse(cartState);
+                
+                // Restore cart items
+                this.cartItems = new Map(state.cartItems);
+                this.renderCart();
+                
+                // Restore search query
+                if (state.searchQuery) {
+                    document.getElementById('customerSearch').value = state.searchQuery;
+                }
+                
+                // Clear the stored state
+                sessionStorage.removeItem('posCartState');
+                
+                // If there's a customer ID in the URL (from successful creation), select that customer
+                const urlParams = new URLSearchParams(window.location.search);
+                const customerId = urlParams.get('customer_created');
+                if (customerId) {
+                    this.loadCustomerById(customerId);
+                    // Clean up the URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } catch (error) {
+                console.error('Error restoring cart state:', error);
+                sessionStorage.removeItem('posCartState');
+            }
+        }
+    }
+
+    async loadCustomerById(customerId) {
+        try {
+            const response = await fetch(`/customers/api/${customerId}/`);
+            if (response.ok) {
+                const customer = await response.json();
+                this.selectCustomer(customer.id, customer.name, customer.phone, customer.email || '');
+            }
+        } catch (error) {
+            console.error('Error loading customer:', error);
+        }
+    }
+
+    addToCart(serviceId) {
+        const service = this.services.find(s => s.id === serviceId);
+        if (!service) return;
+
+        if (this.cartItems.has(serviceId)) {
+            const item = this.cartItems.get(serviceId);
+            item.quantity += 1;
+        } else {
+            this.cartItems.set(serviceId, {
+                id: serviceId,
+                name: service.name,
+                price: parseFloat(service.price_per_dozen),
+                unitPrice: parseFloat(service.price_per_dozen) / 12,
+                quantity: 1
+            });
+        }
+
+        this.renderCart();
+        this.updateCheckoutButton();
+    }
+
+    removeFromCart(serviceId) {
+        this.cartItems.delete(serviceId);
+        this.renderCart();
+        this.updateCheckoutButton();
+    }
+
+    updateQuantity(serviceId, quantity) {
+        if (quantity <= 0) {
+            this.removeFromCart(serviceId);
+            return;
+        }
+
+        const item = this.cartItems.get(serviceId);
+        if (item) {
+            item.quantity = quantity;
+            this.renderCart();
+            this.updateCheckoutButton();
+        }
+    }
+
+    renderCart() {
+        const cartContainer = document.getElementById('cart-items');
+        const cartSummary = document.getElementById('cartSummary');
+        
+        if (this.cartItems.size === 0) {
+            cartContainer.innerHTML = `
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>No items in cart</p>
+                    <small>Select services to add to order</small>
+                </div>
+            `;
+            cartSummary.style.display = 'none';
+            return;
+        }
+
+        cartContainer.innerHTML = Array.from(this.cartItems.values()).map(item => `
+            <div class="cart-item">
+                <div class="item-header">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-remove" onclick="pos.removeFromCart(${item.id})">
+                        <i class="fas fa-times"></i>
+                    </div>
+                </div>
+                <div class="item-controls">
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="pos.updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                        <input type="number" class="qty-input" value="${item.quantity}" 
+                               onchange="pos.updateQuantity(${item.id}, parseInt(this.value))">
+                        <button class="qty-btn" onclick="pos.updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                    </div>
+                </div>
+                <div class="item-total">${currencySymbol}${(item.unitPrice * item.quantity).toFixed(2)}</div>
+            </div>
+        `).join('');
+
+        // Update summary
+        const totalPieces = Array.from(this.cartItems.values()).reduce((sum, item) => sum + item.quantity, 0);
+        const totalAmount = Array.from(this.cartItems.values()).reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+        
+        document.getElementById('totalPieces').textContent = totalPieces;
+        document.getElementById('totalAmount').textContent = `${currencySymbol}${totalAmount.toFixed(2)}`;
+        cartSummary.style.display = 'block';
+    }
+
+    updateCheckoutButton() {
+        const btn = document.getElementById('checkoutBtn');
+        btn.disabled = !this.selectedCustomer || this.cartItems.size === 0;
+    }
+
+    showOrderConfirmation() {
+        if (!this.selectedCustomer || this.cartItems.size === 0) return;
+
+        const summary = document.getElementById('orderSummary');
+        const totalPieces = Array.from(this.cartItems.values()).reduce((sum, item) => sum + item.quantity, 0);
+        const totalAmount = Array.from(this.cartItems.values()).reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+        summary.innerHTML = `
+            <div class="mb-3">
+                <h6>Customer:</h6>
+                <p>${this.selectedCustomer.name}<br>${this.selectedCustomer.phone}</p>
+            </div>
+            <div class="mb-3">
+                <h6>Items:</h6>
+                ${Array.from(this.cartItems.values()).map(item => `
+                    <div class="d-flex justify-content-between">
+                        <span>${item.name} (${item.quantity})</span>
+                        <span>${currencySymbol}${(item.unitPrice * item.quantity).toFixed(2)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="mb-3">
+                <h6>Payment Method:</h6>
+                <select id="paymentMethod" class="form-select">
+                    {% for payment_method in payment_methods %}
+                        <option value="{{ payment_method.code }}">
+                            {% if payment_method.icon %}<i class="{{ payment_method.icon }}"></i> {% endif %}{{ payment_method.name }}
+                        </option>
+                    {% empty %}
+                        <option value="cash">Cash</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="border-top pt-2">
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Total (${totalPieces} pieces):</span>
+                    <span>${currencySymbol}${totalAmount.toFixed(2)}</span>
+                </div>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('orderModal')).show();
+    }
+
+    async createOrder() {
+        if (!this.selectedCustomer || this.cartItems.size === 0) return;
+        
+        // Disable the button and show loading state
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const originalBtnText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+        
+        // Remove any previous error messages
+        const previousErrors = document.querySelectorAll('#orderModal .alert-danger');
+        previousErrors.forEach(el => el.remove());
+
+        // Get selected payment method
+        const paymentMethodSelect = document.getElementById('paymentMethod');
+        const selectedPaymentMethod = paymentMethodSelect ? paymentMethodSelect.value : 'cash';
+        
+        const orderData = {
+            customer: this.selectedCustomer.id,
+            payment_method: selectedPaymentMethod,
+            lines: Array.from(this.cartItems.values()).map(item => ({
+                service: item.id,
+                pieces: item.quantity
+            }))
+        };
+
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+
+        try {
+            console.log('Sending order data:', orderData);
+            console.log('CSRF token:', csrftoken);
+            
+            const response = await fetch('/orders/api/quick-create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(orderData)
+            });
+            
+            console.log('Response status:', response.status);
+
+            if (response.ok) {
+                const order = await response.json();
+                
+                // Hide the modal first
+                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+                
+                // Log the response for debugging
+                console.log('Order created successfully:', order);
+                
+                // Get the order ID
+                const orderId = order.id;
+                const orderNumber = order.order_number || `#${orderId}`;
+                
+                if (!orderId) {
+                    console.error('No order ID found in response:', order);
+                    this.showError('Order created but ID not found. Please check the orders list.');
+                    return;
+                }
+                
+                // Show success message
+                this.showSuccess(`Order ${orderNumber} created successfully! Redirecting to receipt...`);
+                
+                // Clear the cart and customer
+                this.cartItems.clear();
+                this.selectedCustomer = null;
+                this.renderCart();
+                this.clearCustomerSelection();
+                
+                // Redirect to receipt after a brief delay
+                setTimeout(() => {
+                    const receiptUrl = `/orders/${orderId}/receipt/`;
+                    console.log('Redirecting to receipt:', receiptUrl);
+                    window.location.href = receiptUrl;
+                }, 1500);
+                
+            } else {
+                console.error('Order creation failed with status:', response.status);
+                
+                let errorMessage = 'Failed to create order. Please try again.';
+                
+                try {
+                    const error = await response.json();
+                    console.error('Error response:', error);
+                    
+                    if (error.detail) {
+                        errorMessage = error.detail;
+                    } else if (error.non_field_errors) {
+                        errorMessage = error.non_field_errors.join(', ');
+                    } else {
+                        // Check for field-specific errors
+                        const fieldErrors = [];
+                        for (const [field, errors] of Object.entries(error)) {
+                            if (Array.isArray(errors)) {
+                                fieldErrors.push(`${field}: ${errors.join(', ')}`);
+                            }
+                        }
+                        
+                        if (fieldErrors.length > 0) {
+                            errorMessage = fieldErrors.join('; ');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to parse error response:', e);
+                    errorMessage = `Server error (${response.status}). Please try again.`;
+                }
+                
+                this.showModalError(errorMessage);
+            }
+        } catch (error) {
+            console.error('Network error creating order:', error);
+            this.showModalError('Network error. Please check your connection and try again.');
+        } finally {
+            // Reset the button
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalBtnText;
+        }
+    }
+
+    showSuccess(message) {
+        // Remove any existing success messages
+        const existingMessages = document.querySelectorAll('.alert-success.pos-alert');
+        existingMessages.forEach(el => el.remove());
+        
+        const successAlert = document.createElement('div');
+        successAlert.className = 'alert alert-success alert-dismissible pos-alert position-fixed';
+        successAlert.style.cssText = 'top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 300px;';
+        successAlert.innerHTML = `
+            <strong><i class="fas fa-check-circle"></i> Success!</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(successAlert);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (successAlert.parentNode) {
+                successAlert.remove();
+            }
+        }, 5000);
+    }
+
+    showModalError(message) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'alert alert-danger mt-3';
+        errorContainer.innerHTML = `<strong><i class="fas fa-exclamation-triangle"></i> Error:</strong> ${message}`;
+        
+        const modalBody = document.querySelector('#orderModal .modal-body');
+        modalBody.appendChild(errorContainer);
+    }
+
+    clearCustomerSelection() {
+        document.getElementById('customerSearch').value = '';
+        document.getElementById('customerSuggestions').style.display = 'none';
+        document.getElementById('customerInfo').classList.remove('active');
+        this.updateCheckoutButton();
+    }
+}
+
+// Initialize POS system
+let pos;
+document.addEventListener('DOMContentLoaded', function() {
+    pos = new POSSystem();
+});
+
+// Add JS for AJAX customer creation
+document.addEventListener('DOMContentLoaded', function() {
+    const customerForm = document.getElementById('customer-create-form');
+    const errorDiv = document.getElementById('customer-create-error');
+    const customerSelect = document.getElementById('customer-select');
+    const modal = new bootstrap.Modal(document.getElementById('customerCreateModal'));
+
+    customerForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      errorDiv.classList.add('d-none');
+      errorDiv.textContent = '';
+      const formData = new FormData(customerForm);
+      fetch('{% url "customers:create_ajax" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Add new customer to select
+          const option = document.createElement('option');
+          option.value = data.customer.id;
+          option.textContent = data.customer.name + (data.customer.phone ? ' (' + data.customer.phone + ')' : '');
+          option.selected = true;
+          customerSelect.appendChild(option);
+          modal.hide();
+          customerForm.reset();
+        } else {
+          errorDiv.textContent = data.error || 'Could not create customer.';
+          errorDiv.classList.remove('d-none');
+        }
+      })
+      .catch(() => {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('d-none');
+      });
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Service search filter
+    const serviceSearch = document.getElementById('service-search');
+    if (serviceSearch) {
+      serviceSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.service-card').forEach(card => {
+          const name = card.getAttribute('data-service-name').toLowerCase();
+          card.style.display = name.includes(query) ? '' : 'none';
+        });
+      });
+    }
+    // Loyalty points refresh (AJAX)
+    const customerSelect = document.getElementById('customer-select');
+    const loyaltyPoints = document.getElementById('loyalty-points');
+    const refreshLoyaltyBtn = document.getElementById('refresh-loyalty-btn');
+    function fetchLoyaltyPoints(customerId) {
+      if (!customerId) { loyaltyPoints.textContent = '0'; return; }
+      fetch(`/customers/api/${customerId}/`)
+        .then(res => res.json())
+        .then(data => {
+          loyaltyPoints.textContent = data.loyalty_points || '0';
+        });
+    }
+    customerSelect.addEventListener('change', function() {
+      fetchLoyaltyPoints(this.value);
+    });
+    refreshLoyaltyBtn.addEventListener('click', function() {
+      fetchLoyaltyPoints(customerSelect.value);
+    });
+    // Cart logic placeholder (implement add/remove/edit, update summary, etc.)
+    // ...
+  });
+</script>
+{% endblock %}

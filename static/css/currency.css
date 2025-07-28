@@ -1,0 +1,39 @@
+/* 
+ * Currency formatting styles
+ */
+
+.currency-amount {
+    font-family: monospace;  /* Use monospace for better alignment of numbers */
+    text-align: right;
+    white-space: nowrap;
+    display: inline-block;
+    min-width: 4em; /* Gives some consistent space for values */
+}
+
+.currency-symbol {
+    margin-right: 0.1em;
+}
+
+.money-cell {
+    text-align: right;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+/* Styling for negative amounts */
+.negative-amount {
+    color: #e53935;  /* Red color for negative values */
+}
+
+/* Tables with monetary values */
+.table-financial td:has(.currency-amount),
+.table-financial th.money-header {
+    text-align: right;
+}
+
+/* Responsive behavior for currency display */
+@media (max-width: 576px) {
+    .currency-amount {
+        min-width: 3em;
+    }
+}

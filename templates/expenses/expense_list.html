@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load expense_tags %}
+{% load currency_format %}
+
+{% block title %}Expenses - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .expense-card {
+        border-left: 4px solid #007bff;
+        transition: all 0.3s ease;
+    }
+    .expense-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .expense-status {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .expense-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .category-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    /* View Toggle Styles */
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .view-toggle-btn {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #6c757d;
+    }
+
+    .view-toggle-btn:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* List View Styles */
+    .expenses-container.list-view {
+        display: block;
+    }
+
+    .expenses-container.list-view .expense-card {
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .expenses-container.list-view .expense-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+
+    .expenses-container.list-view .expense-card .card-body {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+    }
+
+    .expenses-container.list-view .expense-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .expenses-container.list-view .expense-details {
+        flex: 2;
+    }
+
+    .expenses-container.list-view .expense-amount {
+        flex: 1;
+        text-align: center;
+    }
+
+    .expenses-container.list-view .expense-actions {
+        flex: 0 0 auto;
+        margin-left: 1rem;
+    }
+
+    /* Card View Styles (Default) */
+    .expenses-container.card-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .expenses-container.card-view .expense-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Expenses
+                    </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="view-toggle">
+                            <button type="button" class="view-toggle-btn active" id="cardViewBtn" onclick="switchView('card')">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button type="button" class="view-toggle-btn" id="listViewBtn" onclick="switchView('list')">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                        <a href="{% url 'expenses:create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Expense
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Filters -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <select class="form-select" id="categoryFilter" onchange="filterExpenses()">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="approvalFilter" onchange="filterExpenses()">
+                                <option value="">All Expenses</option>
+                                <option value="true" {% if current_approved == "true" %}selected{% endif %}>Approved</option>
+                                <option value="false" {% if current_approved == "false" %}selected{% endif %}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search expenses...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="searchExpenses()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expenses List -->
+                    <div class="expenses-container card-view" id="expensesList">
+                        {% for expense in expenses %}
+                        <div class="expense-item">
+                            <div class="card expense-card">
+                                <div class="card-body">
+                                    <div class="expense-info">
+                                        <div class="expense-details">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <span class="category-color" style="background-color: {{ expense.category.color }}"></span>
+                                                    <small class="text-muted">{{ expense.category.name }}</small>
+                                                </div>
+                                                <div class="expense-status">
+                                                    {% if expense.is_approved %}
+                                                        <span class="badge bg-success">Approved</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <h6 class="card-title">{{ expense.description }}</h6>
+                                            <small class="text-muted">{{ expense.expense_date|date:"M d, Y" }}</small>
+                                        </div>
+                                        
+                                        <div class="expense-amount text-primary">
+                                            {{ expense.amount|currency_html }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="expense-actions">
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'expenses:detail' expense.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if expense|can_edit_expense:request.user %}
+                                            <a href="{% url 'expenses:edit' expense.pk %}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if not expense.is_approved and request.user|is_admin_user %}
+                                            <button class="btn btn-sm btn-outline-success" onclick="approveExpense({{ expense.pk }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="text-center py-5">
+                                <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No expenses found</h5>
+                                <p class="text-muted">Start by adding your first expense.</p>
+                                <a href="{% url 'expenses:create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Add Expense
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Expenses pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if current_category %}&category={{ current_category }}{% endif %}{% if current_approved %}&approved={{ current_approved }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_approved %}&approved={{ current_approved }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_approved %}&approved={{ current_approved }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_approved %}&approved={{ current_approved }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterExpenses() {
+    const category = document.getElementById('categoryFilter').value;
+    const approved = document.getElementById('approvalFilter').value;
+    
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (approved) params.append('approved', approved);
+    
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function searchExpenses() {
+    const query = document.getElementById('searchInput').value;
+    if (query.length < 2) return;
+    
+    // This would make an AJAX call to search
+    console.log('Searching for:', query);
+}
+
+function approveExpense(expenseId) {
+    if (!confirm('Are you sure you want to approve this expense?')) return;
+    
+    fetch(`/expenses/ajax/${expenseId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to approve expense');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to approve expense');
+    });
+}
+
+// View Toggle Functionality
+function switchView(viewType) {
+    const expensesList = document.getElementById('expensesList');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const listBtn = document.getElementById('listViewBtn');
+    
+    // Remove existing view classes
+    expensesList.classList.remove('card-view', 'list-view');
+    
+    // Remove active state from buttons
+    cardBtn.classList.remove('active');
+    listBtn.classList.remove('active');
+    
+    // Apply new view
+    if (viewType === 'card') {
+        expensesList.classList.add('card-view');
+        cardBtn.classList.add('active');
+    } else {
+        expensesList.classList.add('list-view');
+        listBtn.classList.add('active');
+    }
+    
+    // Save preference to localStorage
+    localStorage.setItem('expenseViewPreference', viewType);
+}
+
+// Load saved view preference
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('expenseViewPreference');
+    if (savedView && savedView === 'list') {
+        switchView('list');
+    }
+});
+</script>
+{% endblock %}

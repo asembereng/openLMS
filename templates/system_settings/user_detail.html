@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user_obj.get_full_name|default:user_obj.username }} - User Details - {{ block.super }}{% endblock %}
+
+{% block content %}
+    {% include 'system_settings/user_detail_content.html' %}
+{% endblock %}

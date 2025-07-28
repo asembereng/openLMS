@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate Report - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Generate Report</h4>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {# Render the template chooser first #}
+        <div class="mb-3">
+          {{ form.template.label_tag }}
+          {{ form.template }}
+          {% for error in form.template.errors %}
+            <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        {# Placeholder for dynamic filters based on template.config #}
+        <div id="dynamic-filters-container"></div>
+        {# Render date range and export format next #}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.date_from.label_tag }}
+            {{ form.date_from }}
+            {% for error in form.date_from.errors %}
+              <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.date_to.label_tag }}
+            {{ form.date_to }}
+            {% for error in form.date_to.errors %}
+              <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="mb-3">
+          {{ form.export_format.label_tag }}
+          {{ form.export_format }}
+          {% for error in form.export_format.errors %}
+            <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-success">Generate</button>
+        <a href="{% url 'reports:report_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const templateSelect = document.querySelector('select[name="template"]');
+    const filtersContainer = document.getElementById('dynamic-filters-container');
+    templateSelect.addEventListener('change', function() {
+      const templateId = this.value;
+      if (!templateId) {
+        filtersContainer.innerHTML = '';
+        return;
+      }
+      fetch(`{% url 'reports:filters_ajax' %}?template_id=${templateId}`)
+        .then(res => res.json())
+        .then(data => {
+          filtersContainer.innerHTML = data.html || '';
+        })
+        .catch(err => console.error('Error loading filters:', err));
+    });
+    // Trigger load if pre-selected
+    if (templateSelect.value) {
+      templateSelect.dispatchEvent(new Event('change'));
+    }
+  });
+</script>
+{% endblock %}

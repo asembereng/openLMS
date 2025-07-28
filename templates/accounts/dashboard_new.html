@@ -1,0 +1,515 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .quick-stats {
+        margin-bottom: 2rem;
+    }
+
+    .quick-actions {
+        margin-bottom: 2rem;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        color: inherit;
+        text-decoration: none;
+        border-color: var(--primary-color);
+    }
+
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-color);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .action-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .action-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+
+    .action-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .action-desc {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+        margin-bottom: 0;
+    }
+
+    .recent-activity {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .activity-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--medium-gray);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+    .activity-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+    .activity-icon.info { background: rgba(6, 182, 212, 0.1); color: var(--secondary-color); }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-desc {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+        margin-bottom: 0;
+    }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: var(--text-gray);
+        flex-shrink: 0;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .metric-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-label {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-change {
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+
+    .metric-change.positive {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .metric-change.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-gray);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .stats-number {
+            font-size: 1.5rem;
+        }
+
+        .action-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-home me-3"></i>
+            Welcome to A&F Laundry Services
+        </h1>
+        <p>
+            {% if user.is_authenticated %}
+                Hello, {{ user.get_full_name|default:user.username }}! 
+                {% if user.profile.is_admin %}
+                    You have admin access to manage the entire system.
+                {% else %}
+                    Ready to manage your laundry operations.
+                {% endif %}
+            {% else %}
+                Please log in to access your dashboard.
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+        <div class="row g-4">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <a href="{% url 'orders:list' %}" class="stats-card stats-primary">
+                    <div class="stats-content">
+                        <div class="stats-number" id="totalOrders">0</div>
+                        <p class="stats-label">Total Orders</p>
+                    </div>
+                    <i class="fas fa-shopping-cart stats-icon"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <a href="{% url 'customers:list' %}" class="stats-card stats-success">
+                    <div class="stats-content">
+                        <div class="stats-number" id="totalCustomers">0</div>
+                        <p class="stats-label">Active Customers</p>
+                    </div>
+                    <i class="fas fa-users stats-icon"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <a href="{% url 'services:list' %}" class="stats-card stats-warning">
+                    <div class="stats-content">
+                        <div class="stats-number" id="totalServices">0</div>
+                        <p class="stats-label">Services Available</p>
+                    </div>
+                    <i class="fas fa-cogs stats-icon"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stats-card stats-info">
+                    <div class="stats-content">
+                        <div class="stats-number">{{ CURRENCY_SYMBOL }}<span id="monthlyRevenue">0</span></div>
+                        <p class="stats-label">This Month Revenue</p>
+                    </div>
+                    <i class="fas fa-chart-line stats-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="row g-4">
+            <div class="col-12">
+                <h3 class="mb-4">Quick Actions</h3>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <a href="{% url 'orders:create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="action-title">New Order</div>
+                    <p class="action-desc">Create a new laundry order</p>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <a href="{% url 'customers:create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="action-title">Add Customer</div>
+                    <p class="action-desc">Register a new customer</p>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <a href="{% url 'expenses:create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="action-title">Add Expense</div>
+                    <p class="action-desc">Record a business expense</p>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <a href="{% url 'reports:report_list' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="action-title">View Reports</div>
+                    <p class="action-desc">Generate business reports</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="row g-4">
+        <!-- Recent Activity -->
+        <div class="col-lg-8">
+            <div class="recent-activity">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Activity
+                    </h5>
+                </div>
+                <div id="recentActivity">
+                    <div class="activity-item">
+                        <div class="activity-icon info">
+                            <i class="fas fa-info"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">System Initialized</div>
+                            <div class="activity-desc">Welcome to A&F Laundry Management System</div>
+                        </div>
+                        <div class="activity-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Metrics -->
+        <div class="col-lg-4">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="metric-card">
+                        <div class="metric-number" id="pendingOrders">0</div>
+                        <div class="metric-label">Pending Orders</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up me-1"></i>0%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="metric-card">
+                        <div class="metric-number" id="completedToday">0</div>
+                        <div class="metric-label">Completed Today</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up me-1"></i>0%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            // Load customer stats
+            const customerResponse = await fetch('/customers/api/stats/');
+            if (customerResponse.ok) {
+                const customerData = await customerResponse.json();
+                document.getElementById('totalCustomers').textContent = customerData.active_customers || 0;
+            }
+
+            // Load service stats
+            const serviceResponse = await fetch('/services/api/stats/');
+            if (serviceResponse.ok) {
+                const serviceData = await serviceResponse.json();
+                document.getElementById('totalServices').textContent = serviceData.active_services || 0;
+            }
+
+            // Add more API calls as needed for orders, revenue, etc.
+            
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    // Animate numbers
+    function animateNumber(element, target, duration = 1000) {
+        const start = 0;
+        const increment = target / (duration / 16);
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, 16);
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+        
+        // Add some demo activity for now
+        setTimeout(() => {
+            const activities = [
+                { 
+                    icon: 'success', 
+                    iconClass: 'fa-check', 
+                    title: 'Order Completed', 
+                    desc: 'Order #001 has been completed for John Doe',
+                    time: '2 minutes ago'
+                },
+                { 
+                    icon: 'info', 
+                    iconClass: 'fa-plus', 
+                    title: 'New Customer', 
+                    desc: 'Jane Smith has been added to the system',
+                    time: '5 minutes ago'
+                },
+                { 
+                    icon: 'warning', 
+                    iconClass: 'fa-exclamation', 
+                    title: 'Low Stock Alert', 
+                    desc: 'Detergent supply is running low',
+                    time: '10 minutes ago'
+                }
+            ];
+
+            const activityContainer = document.getElementById('recentActivity');
+            activityContainer.innerHTML = '';
+            
+            activities.forEach(activity => {
+                const activityHTML = `
+                    <div class="activity-item">
+                        <div class="activity-icon ${activity.icon}">
+                            <i class="fas ${activity.iconClass}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-desc">${activity.desc}</div>
+                        </div>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                `;
+                activityContainer.insertAdjacentHTML('beforeend', activityHTML);
+            });
+        }, 1000);
+    });
+</script>
+{% endblock %}

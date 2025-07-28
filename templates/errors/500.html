@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Server Error - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    .error-content {
+        text-align: center;
+        color: white;
+        padding: 3rem;
+    }
+    .error-code {
+        font-size: 8rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 1rem;
+    }
+    .error-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .error-description {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .error-actions {
+        margin-top: 2rem;
+    }
+    .error-actions .btn {
+        margin: 0 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+    }
+    .error-actions .btn:hover {
+        transform: translateY(-2px);
+    }
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="error-code">500</div>
+            <h1 class="error-title">Server Error</h1>
+            <p class="error-description">
+                Something went wrong on our end. We're experiencing technical difficulties 
+                and our team has been automatically notified. Please try again in a few moments.
+            </p>
+            
+            <div class="error-actions">
+                <button onclick="location.reload()" class="btn btn-light btn-lg">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+                <a href="/dashboard/" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+            
+            <div class="mt-4">
+                <small class="text-light opacity-75">
+                    <i class="fas fa-tools"></i> 
+                    Error ID: {{ error_id|default:"N/A" }} | Time: {{ timestamp|default:"Now" }}
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-primary mb-3"></i>
+                    <h5>Temporary Issue</h5>
+                    <p class="text-muted">
+                        This is likely a temporary problem. Most issues resolve themselves 
+                        within a few minutes. Try refreshing the page.
+                    </p>
+                    <button onclick="location.reload()" class="btn btn-outline-primary">
+                        <i class="fas fa-redo"></i> Refresh Page
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-bell fa-2x text-warning mb-3"></i>
+                    <h5>Auto-Reported</h5>
+                    <p class="text-muted">
+                        Our development team has been automatically notified about this error 
+                        and is working to resolve it.
+                    </p>
+                    <span class="badge bg-success">
+                        <i class="fas fa-check"></i> Team Notified
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-life-ring fa-2x text-danger mb-3"></i>
+                    <h5>Need Urgent Help?</h5>
+                    <p class="text-muted">
+                        If this error is blocking critical business operations, 
+                        please contact our emergency support line.
+                    </p>
+                    <a href="mailto:emergency@aflaundry.com" class="btn btn-outline-danger">
+                        <i class="fas fa-phone"></i> Emergency Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <div class="alert alert-light border">
+            <h6><i class="fas fa-info-circle text-info"></i> What happened?</h6>
+            <p class="mb-2">A server error (HTTP 500) means something unexpected happened on our servers while processing your request. Common causes include:</p>
+            <ul class="mb-0">
+                <li>Temporary database connectivity issues</li>
+                <li>Server maintenance or updates</li>
+                <li>High system load</li>
+                <li>Application configuration issues</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh after 30 seconds if user hasn't taken action
+setTimeout(function() {
+    if (confirm('Would you like to try loading the page again?')) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}

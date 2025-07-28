@@ -1,0 +1,35 @@
+{# Dynamic filters based on template.config #}
+{% if config.filters %}
+  <div class="mb-4" id="dynamic-filter-fields">
+    <h5>Additional Filters</h5>
+    {% for field in config.filters %}
+      {% if field.type == 'date_range' %}
+        <div class="row">
+          <div class="col">
+            <label for="id_{{ field.name }}_from" class="form-label">{{ field.label_from }}</label>
+            <input type="date" name="{{ field.name }}_from" id="id_{{ field.name }}_from" class="form-control">
+          </div>
+          <div class="col">
+            <label for="id_{{ field.name }}_to" class="form-label">{{ field.label_to }}</label>
+            <input type="date" name="{{ field.name }}_to" id="id_{{ field.name }}_to" class="form-control">
+          </div>
+        </div>
+      {% elif field.type == 'choice' %}
+        <div class="mb-3">
+          <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
+          <select name="{{ field.name }}" id="id_{{ field.name }}" class="form-select">
+            <option value="">-- Select {{ field.label }} --</option>
+            {% for val, lab in field.choices %}
+              <option value="{{ val }}">{{ lab }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% elif field.type == 'text' %}
+        <div class="mb-3">
+          <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
+          <input type="text" name="{{ field.name }}" id="id_{{ field.name }}" class="form-control" placeholder="Enter {{ field.label }}">
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

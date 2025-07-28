@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Loyalty Rules</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Trigger Type</th>
+            <th>Active</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rule in rules %}
+        <tr>
+            <td>{{ rule.name }}</td>
+            <td>{{ rule.trigger_type }}</td>
+            <td>{{ rule.is_active }}</td>
+            <td>{{ rule.created_at }}</td>
+            <td>{{ rule.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

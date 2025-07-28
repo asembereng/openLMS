@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Loyalty Rule Template - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Create a New Loyalty Rule</h1>
+        <a href="{% url 'loyalty:rule_create' %}" class="btn btn-secondary btn-icon-split">
+            <span class="icon text-white-50"><i class="fas fa-file"></i></span>
+            <span class="text">Start from Blank</span>
+        </a>
+    </div>
+
+    <p class="mb-4">Choose one of our best-practice templates to get started quickly, or start from a blank slate.</p>
+
+    <div class="row">
+        {% for template in templates %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title font-weight-bold text-primary">{{ template.name }}</h5>
+                    <p class="card-text">{{ template.description }}</p>
+                    <div class="mt-auto">
+                        <a href="{% url 'loyalty:rule_create' %}?template={{ template.id }}" class="btn btn-primary">
+                            Use this Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

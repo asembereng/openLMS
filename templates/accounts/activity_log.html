@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Log - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .activity-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .activity-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    .activity-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+    }
+    .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background-color 0.2s ease;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .activity-item:hover {
+        background-color: #f8f9fa;
+    }
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    .activity-icon.create {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+    .activity-icon.update {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    .activity-icon.delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    .activity-icon.login {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+    }
+    .activity-content {
+        flex: 1;
+    }
+    .activity-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    .activity-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    .activity-time {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+    .filter-tabs {
+        background: white;
+        border-radius: 12px;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .filter-tab {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        border-radius: 8px;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .filter-tab.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="activity-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-history me-2"></i>
+                    Activity Log
+                </h2>
+                <p class="mb-0 opacity-75">
+                    Track your actions and system usage
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'accounts:profile' %}" class="btn btn-light">
+                    <i class="fas fa-user me-2"></i>
+                    Back to Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterActivities('all')">
+            All Activities
+        </button>
+        <button class="filter-tab" onclick="filterActivities('create')">
+            Creates
+        </button>
+        <button class="filter-tab" onclick="filterActivities('update')">
+            Updates
+        </button>
+        <button class="filter-tab" onclick="filterActivities('delete')">
+            Deletes
+        </button>
+        <button class="filter-tab" onclick="filterActivities('login')">
+            Logins
+        </button>
+    </div>
+
+    <!-- Activity List -->
+    <div class="activity-card">
+        <div class="card-header">
+            <i class="fas fa-list me-2"></i>
+            Recent Activities
+        </div>
+        <div class="card-body p-0">
+            {% if activities %}
+                {% for activity in activities %}
+                <div class="activity-item" data-action="{{ activity.action|lower }}">
+                    <div class="d-flex align-items-start">
+                        <div class="activity-icon {{ activity.action|lower|slice:':6' }}">
+                            {% if 'create' in activity.action|lower %}
+                                <i class="fas fa-plus"></i>
+                            {% elif 'update' in activity.action|lower or 'edit' in activity.action|lower %}
+                                <i class="fas fa-edit"></i>
+                            {% elif 'delete' in activity.action|lower %}
+                                <i class="fas fa-trash"></i>
+                            {% elif 'login' in activity.action|lower %}
+                                <i class="fas fa-sign-in-alt"></i>
+                            {% else %}
+                                <i class="fas fa-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                {{ activity.action }}
+                            </div>
+                            <div class="activity-description">
+                                {{ activity.change_message|default:activity.object_repr }}
+                            </div>
+                            <div class="activity-time">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ activity.timestamp|timesince }} ago
+                                <span class="ms-2 text-muted">•</span>
+                                <span class="ms-2">{{ activity.timestamp|date:"M d, Y g:i A" }}</span>
+                                {% if activity.ip_address %}
+                                <span class="ms-2 text-muted">•</span>
+                                <span class="ms-2">{{ activity.ip_address }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <h5>No Activities Found</h5>
+                    <p>Your activity log is empty. Start using the system to see your activities here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Activity pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterActivities(filterType) {
+    // Update active tab
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter activity items
+    const activityItems = document.querySelectorAll('.activity-item');
+    
+    activityItems.forEach(item => {
+        if (filterType === 'all') {
+            item.style.display = 'block';
+        } else {
+            const actionType = item.getAttribute('data-action');
+            if (actionType === filterType) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+    
+    // Check if any items are visible
+    const visibleItems = Array.from(activityItems).filter(item => 
+        item.style.display !== 'none'
+    );
+    
+    // Show/hide empty state
+    const cardBody = document.querySelector('.activity-card .card-body');
+    let emptyState = cardBody.querySelector('.empty-state');
+    
+    if (visibleItems.length === 0) {
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <i class="fas fa-filter"></i>
+                <h5>No Activities Found</h5>
+                <p>No activities match the selected filter.</p>
+            `;
+            cardBody.appendChild(emptyState);
+        }
+        emptyState.style.display = 'block';
+    } else {
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
+}
+
+// Auto-refresh every 30 seconds
+setInterval(function() {
+    // Only refresh if we're on the 'all' filter
+    if (document.querySelector('.filter-tab.active').textContent.trim() === 'All Activities') {
+        window.location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}

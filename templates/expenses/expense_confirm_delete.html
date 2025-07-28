@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Expense - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .delete-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .delete-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+    }
+    .warning-box {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .expense-summary {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .info-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    .btn {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="delete-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Delete Expense
+                </h2>
+                <p class="mb-0 opacity-75">
+                    This action cannot be undone
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'expenses:detail' expense.pk %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Expense
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="delete-card">
+                <div class="card-header text-danger">
+                    <i class="fas fa-trash-alt me-2"></i>
+                    Confirm Deletion
+                </div>
+                <div class="card-body">
+                    <!-- Warning -->
+                    <div class="warning-box">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle text-warning me-3 mt-1"></i>
+                            <div>
+                                <h6 class="mb-1">Warning: Permanent Deletion</h6>
+                                <p class="mb-0">
+                                    Are you sure you want to delete this expense? This action cannot be undone and will permanently remove all associated data including receipts and attachments.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expense Summary -->
+                    <div class="expense-summary">
+                        <h6 class="mb-3">
+                            <i class="fas fa-receipt me-2"></i>
+                            Expense to be deleted:
+                        </h6>
+                        
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Description:</span>
+                                </div>
+                                <div class="col-8">
+                                    {{ expense.description }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Category:</span>
+                                </div>
+                                <div class="col-8">
+                                    <span class="category-color" style="background-color: {{ expense.category.color }}; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+                                    {{ expense.category.name }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Amount:</span>
+                                </div>
+                                <div class="col-8">
+                                    <span class="text-success fw-bold">{{ CURRENCY_SYMBOL }}{{ expense.amount|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Date:</span>
+                                </div>
+                                <div class="col-8">
+                                    {{ expense.expense_date|date:"F d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Status:</span>
+                                </div>
+                                <div class="col-8">
+                                    {% if expense.is_approved %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if expense.notes %}
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span class="info-label">Notes:</span>
+                                </div>
+                                <div class="col-8">
+                                    {{ expense.notes|truncatewords:20 }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Additional Warnings -->
+                    {% if expense.receipt_image or expense.attachments.exists %}
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-paperclip me-2"></i>
+                            Files will also be deleted:
+                        </h6>
+                        <ul class="mb-0">
+                            {% if expense.receipt_image %}
+                                <li>Receipt image</li>
+                            {% endif %}
+                            {% if expense.attachments.exists %}
+                                <li>{{ expense.attachments.count }} attachment{{ expense.attachments.count|pluralize }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-danger w-100" onclick="return confirmDelete()">
+                                    <i class="fas fa-trash-alt me-2"></i>
+                                    Yes, Delete Expense
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'expenses:detail' expense.pk %}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    return confirm(
+        'Are you absolutely sure you want to delete this expense?\n\n' +
+        'This action cannot be undone and will permanently remove:\n' +
+        '• The expense record\n' +
+        '• Receipt image (if any)\n' +
+        '• All attachments\n\n' +
+        'Type "DELETE" to confirm:'
+    ) && prompt('Type "DELETE" to confirm deletion:') === 'DELETE';
+}
+
+// Add keyboard shortcut for cancel (Escape key)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.location.href = "{% url 'expenses:detail' expense.pk %}";
+    }
+});
+</script>
+{% endblock %}

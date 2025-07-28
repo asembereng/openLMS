@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Debug Auth Status{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Authentication Debug</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>User Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>User:</strong> {{ user }}</p>
+                    <p><strong>Authenticated:</strong> {{ is_authenticated }}</p>
+                    <p><strong>Superuser:</strong> {{ is_superuser }}</p>
+                    <p><strong>Groups:</strong> {{ user_groups|join:", "|default:"None" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Admin Filter Test</h5>
+                </div>
+                <div class="card-body">
+                    {% load admin_tags %}
+                    <p><strong>is_admin filter result:</strong> {{ user|is_admin }}</p>
+                    
+                    {% if user|is_admin %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> User has admin access
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> User does not have admin access
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if service %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Service Admin Buttons Test</h5>
+                </div>
+                <div class="card-body">
+                    <p>Testing admin buttons for service: <strong>{{ service.name }}</strong></p>
+                    
+                    <div class="action-buttons">
+                        {% if user|is_admin %}
+                        <a href="{% url 'services:edit' service.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Service
+                        </a>
+                        <a href="{% url 'services:delete' service.pk %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Delete Service
+                        </a>
+                        <div class="alert alert-info mt-2">
+                            Admin buttons are visible!
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            Admin buttons are hidden (user is not admin)
+                        </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'services:detail' service.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye"></i> View Service Detail
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Error Testing Dashboard - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-bug"></i> Error Testing Dashboard</h2>
+            <p class="text-muted">Test custom error pages and error handling mechanisms</p>
+        </div>
+        <a href="/dashboard/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="alert alert-warning">
+        <h6><i class="fas fa-exclamation-triangle"></i> Development Testing Only</h6>
+        <p class="mb-0">
+            This dashboard is for testing error handling in development. 
+            Each button below will trigger a different type of error to test the custom error pages.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <div class="error-icon mb-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">400 - Bad Request</h5>
+                    <p class="card-text">
+                        Test the custom 400 error page that handles malformed requests
+                        and provides helpful guidance to users.
+                    </p>
+                    <a href="/test-errors/400/" class="btn btn-outline-warning">
+                        <i class="fas fa-bug"></i> Trigger 400 Error
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <div class="error-icon mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-danger"></i>
+                    </div>
+                    <h5 class="card-title">403 - Forbidden</h5>
+                    <p class="card-text">
+                        Test the custom 403 error page that handles permission denied
+                        scenarios with actionable user guidance.
+                    </p>
+                    <a href="/test-errors/403/" class="btn btn-outline-danger">
+                        <i class="fas fa-ban"></i> Trigger 403 Error
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <div class="error-icon mb-3">
+                        <i class="fas fa-search fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">404 - Not Found</h5>
+                    <p class="card-text">
+                        Test the custom 404 error page with beautiful design
+                        and helpful navigation options for lost users.
+                    </p>
+                    <a href="/test-errors/404/" class="btn btn-outline-primary">
+                        <i class="fas fa-question-circle"></i> Trigger 404 Error
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-dark">
+                <div class="card-body text-center">
+                    <div class="error-icon mb-3">
+                        <i class="fas fa-server fa-3x text-dark"></i>
+                    </div>
+                    <h5 class="card-title">500 - Server Error</h5>
+                    <p class="card-text">
+                        Test the custom 500 error page that handles server errors
+                        with automatic reporting and user-friendly messaging.
+                    </p>
+                    <a href="/test-errors/500/" class="btn btn-outline-dark">
+                        <i class="fas fa-exclamation-circle"></i> Trigger 500 Error
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Error Handling Features</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>✅ Implemented Features:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Custom error page templates</li>
+                                <li><i class="fas fa-check text-success"></i> User-friendly error messages</li>
+                                <li><i class="fas fa-check text-success"></i> Actionable guidance for users</li>
+                                <li><i class="fas fa-check text-success"></i> Beautiful responsive design</li>
+                                <li><i class="fas fa-check text-success"></i> Automatic error logging</li>
+                                <li><i class="fas fa-check text-success"></i> Email notifications (production)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>🔧 Technical Details:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-cog text-info"></i> Custom error handlers in Django</li>
+                                <li><i class="fas fa-cog text-info"></i> CSRF failure handling</li>
+                                <li><i class="fas fa-cog text-info"></i> Security monitoring & logging</li>
+                                <li><i class="fas fa-cog text-info"></i> Error ID generation for tracking</li>
+                                <li><i class="fas fa-cog text-info"></i> Client IP logging</li>
+                                <li><i class="fas fa-cog text-info"></i> Navigation breadcrumbs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-lightbulb"></i> Testing Tips</h6>
+            <ul class="mb-0">
+                <li>Each error page includes navigation options to help users recover</li>
+                <li>Error pages are responsive and work on mobile devices</li>
+                <li>All errors are logged with user and request information</li>
+                <li>In production, 500 errors trigger automatic admin notifications</li>
+                <li>CSRF errors provide clear instructions for resolution</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

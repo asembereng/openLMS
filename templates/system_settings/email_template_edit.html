@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Email Template - A&F Laundry Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-edit text-primary me-2"></i>
+            Edit Email Template
+        </h1>
+        <p class="text-muted mb-0">{{ object.get_template_type_display }}</p>
+    </div>
+    <a href="{% url 'system_settings:email_templates' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Templates
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>
+                        Template Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label">Email Subject</label>
+                            {{ form.subject|add_class:"form-control" }}
+                            <div class="form-text">You can use variables like {% verbatim %}{{company_name}}{% endverbatim %} or {% verbatim %}{{user_name}}{% endverbatim %}</div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.is_active|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Template is Active
+                                </label>
+                                <div class="form-text">Inactive templates will not be used for sending emails</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>
+                        Email Content
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.html_content.id_for_label }}" class="form-label">HTML Content</label>
+                        {{ form.html_content|add_class:"form-control"|attr:"rows:15" }}
+                        <div class="form-text">Use HTML formatting for rich email content</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.text_content.id_for_label }}" class="form-label">Plain Text Content (Optional)</label>
+                        {{ form.text_content|add_class:"form-control"|attr:"rows:8" }}
+                        <div class="form-text">Fallback content for email clients that don't support HTML</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        Available Variables
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.available_variables.id_for_label }}" class="form-label">Template Variables Help</label>
+                        {{ form.available_variables|add_class:"form-control"|attr:"rows:4" }}
+                        <div class="form-text">Document the variables available for this template type</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    Save Template
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Template Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Template Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Template Type:</strong><br>
+                    <span class="text-muted">{{ object.get_template_type_display }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Status:</strong><br>
+                    {% if object.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-warning">Inactive</span>
+                    {% endif %}
+                </div>
+                {% if object.updated_at %}
+                <div class="mb-3">
+                    <strong>Last Updated:</strong><br>
+                    <span class="text-muted">{{ object.updated_at|date:"M d, Y H:i" }}</span>
+                    {% if object.updated_by %}
+                        <br><small>by {{ object.updated_by.username }}</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Common Variables -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Common Variables
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <code>{% verbatim %}{{company_name}}{% endverbatim %}</code><br>
+                    <small class="text-muted">Company name</small>
+                </div>
+                <div class="mb-2">
+                    <code>{% verbatim %}{{user_name}}{% endverbatim %}</code><br>
+                    <small class="text-muted">User's full name</small>
+                </div>
+                <div class="mb-2">
+                    <code>{% verbatim %}{{user_email}}{% endverbatim %}</code><br>
+                    <small class="text-muted">User's email</small>
+                </div>
+                <div class="mb-2">
+                    <code>{% verbatim %}{{current_date}}{% endverbatim %}</code><br>
+                    <small class="text-muted">Current date</small>
+                </div>
+                <div class="mb-0">
+                    <code>{% verbatim %}{{site_url}}{% endverbatim %}</code><br>
+                    <small class="text-muted">Website URL</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>
+                    Quick Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    <strong>HTML Formatting:</strong> Use standard HTML tags like &lt;p&gt;, &lt;strong&gt;, &lt;br&gt;, etc.
+                </p>
+                <p class="small text-muted mb-2">
+                    <strong>Variables:</strong> Wrap variable names in double curly braces: {% verbatim %}{{variable_name}}{% endverbatim %}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Testing:</strong> Test email templates using the email configuration page.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,837 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Customer{% else %}Add Customer{% endif %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Form Design System */
+    :root {
+        --form-spacing: 1.5rem;
+        --field-height: 3rem;
+        --field-radius: 0.75rem;
+        --focus-color: var(--primary-color);
+        --error-color: var(--danger-color);
+        --success-color: #10b981;
+    }
+
+    /* Page Layout */
+    .form-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Header */
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .form-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        font-size: 1.1rem;
+        color: var(--text-gray);
+        margin-bottom: 0;
+    }
+
+    /* Main Form Card */
+    .form-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .form-card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .form-card-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    .form-card-body {
+        padding: 2.5rem;
+    }
+
+    /* Form Grid System */
+    .form-grid {
+        display: grid;
+        gap: var(--form-spacing);
+    }
+
+    .form-grid.two-column {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .form-grid.three-column {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-field.full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Modern Input Fields */
+    .field-group {
+        position: relative;
+        margin-bottom: var(--form-spacing);
+    }
+
+    .field-label {
+        display: block;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .field-label.required::after {
+        content: ' *';
+        color: var(--error-color);
+    }
+
+    .field-input {
+        width: 100%;
+        height: var(--field-height);
+        padding: 0 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--field-radius);
+        font-size: 1rem;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        outline: none;
+    }
+
+    .field-input:focus {
+        border-color: var(--focus-color);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .field-input.error {
+        border-color: var(--error-color);
+        background: #fef2f2;
+    }
+
+    .field-input.success {
+        border-color: var(--success-color);
+        background: #f0fdf4;
+    }
+
+    /* Textarea */
+    .field-textarea {
+        min-height: 120px;
+        padding: 1rem;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    /* Select Fields */
+    .field-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        appearance: none;
+    }
+
+    /* Input Groups with Icons */
+    .field-with-icon {
+        position: relative;
+    }
+
+    .field-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-gray);
+        font-size: 1rem;
+        z-index: 2;
+    }
+
+    .field-with-icon .field-input {
+        padding-left: 3rem;
+    }
+
+    /* Field Help Text */
+    .field-help {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .field-help::before {
+        content: 'ℹ️';
+        font-size: 0.8rem;
+    }
+
+    /* Field Error */
+    .field-error {
+        color: var(--error-color);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .field-error::before {
+        content: '⚠️';
+        font-size: 0.8rem;
+    }
+
+    /* Field Success */
+    .field-success {
+        color: var(--success-color);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .field-success::before {
+        content: '✅';
+        font-size: 0.8rem;
+    }
+
+    /* Form Sections */
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    /* Customer Preview Card */
+    .customer-preview {
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border: 1px solid #e2e8f0;
+    }
+
+    .preview-header {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .preview-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .preview-stat {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .preview-stat-label {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        padding: 2rem;
+        background: #f8fafc;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Modern Button Styles */
+    .btn-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: var(--field-radius);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-gray);
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: var(--text-gray);
+        color: var(--dark-color);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Loading State */
+    .btn-loading {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .form-page {
+            padding: 1rem;
+        }
+
+        .form-card-body {
+            padding: 1.5rem;
+        }
+
+        .form-grid.two-column,
+        .form-grid.three-column {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            padding: 1.5rem;
+        }
+
+        .form-actions .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .form-header h1 {
+            font-size: 2rem;
+        }
+
+        .preview-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Animation */
+    .form-card {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Focus styles for accessibility */
+    .btn-modern:focus,
+    .field-input:focus {
+        outline: 2px solid var(--focus-color);
+        outline-offset: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <!-- Form Header -->
+    <div class="form-header">
+        <h1>
+            {% if form.instance.pk %}
+                <i class="fas fa-user-edit"></i> Edit Customer
+            {% else %}
+                <i class="fas fa-user-plus"></i> Add New Customer
+            {% endif %}
+        </h1>
+        <p>
+            {% if form.instance.pk %}
+                Update customer information and preferences
+            {% else %}
+                Add a new customer to your laundry management system
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2>
+                {% if form.instance.pk %}Customer Details{% else %}Customer Information{% endif %}
+            </h2>
+        </div>
+
+        <form method="post" id="customerForm" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-card-body">
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        Personal Information
+                    </h3>
+                    
+                    <div class="form-grid two-column">
+                        <!-- Full Name -->
+                        <div class="field-group">
+                            <label for="id_name" class="field-label required">Full Name</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-user field-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="id_name" 
+                                    name="name" 
+                                    class="field-input"
+                                    value="{{ form.name.value|default_if_none:'' }}"
+                                    placeholder="Enter full name"
+                                    required
+                                    autocomplete="name"
+                                >
+                            </div>
+                            {% if form.name.errors %}
+                                <div class="field-error">{{ form.name.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Customer's complete full name</div>
+                            {% endif %}
+
+                             <!-- Date of Birth -->
+                        <div class="field-group">
+                            <label for="id_date_of_birth" class="field-label">Date of Birth</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-calendar-alt field-icon"></i>
+                                <input 
+                                    type="date" 
+                                    id="id_date_of_birth" 
+                                    name="date_of_birth" 
+                                    class="field-input"
+                                    value="{{ form.date_of_birth.value|date:'Y-m-d'|default_if_none:'' }}"
+                                >
+                            </div>
+                            {% if form.date_of_birth.errors %}
+                                <div class="field-error">{{ form.date_of_birth.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Used for birthday loyalty rewards</div>
+                            {% endif %}
+                        </div>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="field-group">
+                            <label for="id_phone" class="field-label required">Phone Number</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-phone field-icon"></i>
+                                <input 
+                                    type="tel" 
+                                    id="id_phone" 
+                                    name="phone" 
+                                    class="field-input"
+                                    value="{{ form.phone.value|default_if_none:'' }}"
+                                    placeholder="+1 (555) 123-4567"
+                                    required
+                                    autocomplete="tel"
+                                >
+                            </div>
+                            {% if form.phone.errors %}
+                                <div class="field-error">{{ form.phone.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Primary contact number</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        Contact Information
+                    </h3>
+                    
+                    <div class="form-grid two-column">
+                        <!-- Email Address -->
+                        <div class="field-group">
+                            <label for="id_email" class="field-label">Email Address</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-envelope field-icon"></i>
+                                <input 
+                                    type="email" 
+                                    id="id_email" 
+                                    name="email" 
+                                    class="field-input"
+                                    value="{{ form.email.value|default_if_none:'' }}"
+                                    placeholder="customer@example.com"
+                                    autocomplete="email"
+                                >
+                            </div>
+                            {% if form.email.errors %}
+                                <div class="field-error">{{ form.email.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Optional email for notifications</div>
+                            {% endif %}
+                        </div>
+
+                       
+
+                        <!-- Status -->
+                        {% if form.instance.pk %}
+                        <div class="field-group">
+                            <label for="id_is_active" class="field-label">Account Status</label>
+                            <select id="id_is_active" name="is_active" class="field-input field-select">
+                                <option value="True" {% if form.instance.is_active %}selected{% endif %}>Active</option>
+                                <option value="False" {% if not form.instance.is_active %}selected{% endif %}>Inactive</option>
+                            </select>
+                            <div class="field-help">Active customers can place orders</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Additional Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        Additional Information
+                    </h3>
+                    
+                    <div class="form-grid">
+                        <!-- Notes -->
+                        <div class="field-group full-width">
+                            <label for="id_notes" class="field-label">Customer Notes</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-comment field-icon"></i>
+                                <textarea 
+                                    id="id_notes" 
+                                    name="notes" 
+                                    class="field-input field-textarea"
+                                    placeholder="Special instructions, preferences, allergies, or other important notes about this customer"
+                                >{{ form.notes.value|default_if_none:'' }}</textarea>
+                            </div>
+                            {% if form.notes.errors %}
+                                <div class="field-error">{{ form.notes.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Special instructions or important customer information</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Preview (for existing customers) -->
+                {% if form.instance.pk %}
+                <div class="customer-preview">
+                    <div class="preview-header">
+                        <i class="fas fa-chart-line"></i>
+                        Customer Statistics
+                    </div>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <div class="preview-stat-value">#{{ form.instance.pk|stringformat:"04d" }}</div>
+                            <div class="preview-stat-label">Customer ID</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-value">{{ form.instance.created_at|date:"M d, Y" }}</div>
+                            <div class="preview-stat-label">Member Since</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-value">{{ form.instance.total_orders|default:0 }}</div>
+                            <div class="preview-stat-label">Total Orders</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-value">{{ CURRENCY_SYMBOL }}{{ form.instance.total_spent|default:0|floatformat:2 }}</div>
+                            <div class="preview-stat-label">Total Spent</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div>
+                    <a href="{% url 'customers:list' %}" class="btn-modern btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Customers
+                    </a>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    {% if form.instance.pk %}
+                        <a href="{% url 'customers:detail' form.instance.pk %}" class="btn-modern btn-outline">
+                            <i class="fas fa-eye"></i>
+                            View Details
+                        </a>
+                    {% endif %}
+                    <button type="submit" class="btn-modern btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i>
+                        {% if form.instance.pk %}Update Customer{% else %}Save Customer{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('customerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const inputs = form.querySelectorAll('.field-input');
+
+        // Real-time validation and styling
+        inputs.forEach(input => {
+            // Add event listeners for real-time feedback
+            input.addEventListener('input', function() {
+                validateField(this);
+                formatInput(this);
+            });
+
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+
+            // Initial validation for pre-filled fields
+            if (input.value.trim() !== '') {
+                validateField(input);
+            }
+        });
+
+        // Field validation function
+        function validateField(field) {
+            const fieldGroup = field.closest('.field-group');
+            const errorDiv = fieldGroup.querySelector('.field-error');
+            const helpDiv = fieldGroup.querySelector('.field-help');
+            
+            // Remove existing validation classes
+            field.classList.remove('error', 'success');
+            
+            // Basic validation
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                field.classList.add('error');
+                return false;
+            }
+            
+            // Email validation
+            if (field.type === 'email' && field.value.trim()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value)) {
+                    field.classList.add('error');
+                    return false;
+                }
+            }
+            
+            // Phone validation
+            if (field.name === 'phone' && field.value.trim()) {
+                const phoneRegex = /^[\+]?[\d\s\-\(\)]{10,}$/;
+                if (!phoneRegex.test(field.value)) {
+                    field.classList.add('error');
+                    return false;
+                }
+            }
+            
+            // If we get here, field is valid
+            if (field.value.trim()) {
+                field.classList.add('success');
+            }
+            
+            return true;
+        }
+
+        // Input formatting
+        function formatInput(field) {
+            switch(field.name) {
+                case 'name':
+                    // Capitalize first letter of each word
+                    field.value = field.value.replace(/\b\w/g, l => l.toUpperCase());
+                    break;
+                    
+                case 'phone':
+                    // Remove non-numeric characters except + and format
+                    let phone = field.value.replace(/[^\d+]/g, '');
+                    field.value = phone;
+                    break;
+                    
+                case 'email':
+                    // Convert to lowercase
+                    field.value = field.value.toLowerCase();
+                    break;
+            }
+        }
+
+        // Form submission with enhanced UX
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all fields
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                // Scroll to first error
+                const firstError = form.querySelector('.field-input.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                return;
+            }
+
+            // Show loading state
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            // Submit form
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+
+        // Auto-save draft (optional feature)
+        let autoSaveTimer;
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    // Save form data to localStorage
+                    const formData = new FormData(form);
+                    const data = Object.fromEntries(formData);
+                    localStorage.setItem('customer_form_draft', JSON.stringify(data));
+                }, 2000);
+            });
+        });
+
+        // Load draft on page load (optional)
+        const draft = localStorage.getItem('customer_form_draft');
+        if (draft && !form.dataset.hasData) {
+            const data = JSON.parse(draft);
+            Object.keys(data).forEach(key => {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field && !field.value) {
+                    field.value = data[key];
+                    validateField(field);
+                }
+            });
+        }
+
+        // Clear draft on successful submission
+        form.addEventListener('submit', function() {
+            localStorage.removeItem('customer_form_draft');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,672 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customers - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .search-filters {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .search-input {
+        border-radius: 50px;
+        border: 1px solid var(--medium-gray);
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        background: var(--light-gray);
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        background: white;
+    }
+
+    .search-wrapper {
+        position: relative;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-gray);
+        z-index: 10;
+    }
+
+    .customer-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .customer-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        border-left-color: var(--success-color);
+    }
+
+    .customer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .customer-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .customer-id {
+        font-size: 0.8rem;
+        color: var(--text-gray);
+        background: var(--light-gray);
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+
+    .customer-contact {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-gray);
+    }
+
+    .contact-item i {
+        width: 16px;
+        text-align: center;
+        color: var(--primary-color);
+    }
+
+    .customer-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .customer-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary-outline {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+
+    .btn-primary-outline:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-success-outline {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-success-outline:hover {
+        background: var(--success-color);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-inactive {
+        background: rgba(156, 163, 175, 0.1);
+        color: var(--text-gray);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 12px;
+        color: var(--text-gray);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* View Toggle Styles */
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .view-toggle-btn {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #6c757d;
+    }
+
+    .view-toggle-btn:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* List View Styles */
+    .customer-list.list-view {
+        display: block;
+    }
+
+    .customer-list.list-view .customer-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+
+    .customer-list.list-view .customer-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+
+    .customer-list.list-view .customer-header {
+        flex: 1;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .customer-list.list-view .customer-contact {
+        flex: 2;
+        margin-bottom: 0;
+        justify-content: flex-start;
+    }
+
+    .customer-list.list-view .customer-stats {
+        flex: 1;
+        margin-bottom: 0;
+        justify-content: center;
+    }
+
+    .customer-list.list-view .customer-actions {
+        flex: 0 0 auto;
+        margin-left: 1rem;
+    }
+
+    .customer-list.list-view .customer-actions .btn-action {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        margin: 0 0.25rem;
+    }
+
+    /* Card View Styles (Default) */
+    .customer-list.card-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .customer-list.card-view .customer-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .customer-list.card-view .customer-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: var(--primary-color);
+    }
+
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .pagination {
+        border-radius: 50px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .page-link {
+        border: none;
+        padding: 0.75rem 1rem;
+        color: var(--text-gray);
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .customer-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .customer-stats {
+            gap: 1rem;
+        }
+
+        .customer-actions {
+            justify-content: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>
+                    <i class="fas fa-users me-3"></i>
+                    Customers
+                </h1>
+                <p>Manage your customer database and track their activity</p>
+            </div>
+            <a href="{% url 'customers:create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus me-2"></i>
+                Add Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="search-filters">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label">Search Customers</label>
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control search-input" id="customerSearch" 
+                           placeholder="Search by name, phone, or email..." 
+                           value="{{ request.GET.search }}">
+                </div>
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Customers</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times me-2"></i>
+                    Clear Filters
+                </button>
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label">View</label>
+                <div class="view-toggle">
+                    <button type="button" class="view-toggle-btn active" id="cardViewBtn" onclick="switchView('card')">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button type="button" class="view-toggle-btn" id="listViewBtn" onclick="switchView('list')">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer List -->
+    <div class="customer-list card-view" id="customerList">
+        {% if customers %}
+            {% for customer in customers %}
+            <div class="customer-card">
+                <div class="customer-header">
+                    <div>
+                        <div class="customer-name">{{ customer.name }}</div>
+                        <div class="customer-id">ID: #{{ customer.id|stringformat:"04d" }}</div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if customer.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if customer.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="customer-contact">
+                    {% if customer.phone %}
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ customer.phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if customer.email %}
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ customer.email }}</span>
+                    </div>
+                    {% endif %}
+                    {% if customer.address %}
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ customer.address|truncatechars:50 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="customer-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ customer.total_orders|default:0 }}</div>
+                        <div class="stat-label">Orders</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ CURRENCY_SYMBOL }}{{ customer.total_spent|default:0|floatformat:0 }}</div>
+                        <div class="stat-label">Total Spent</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">
+                            {% if customer.last_visit %}
+                                {{ customer.last_visit|timesince }} ago
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </div>
+                        <div class="stat-label">Last Visit</div>
+                    </div>
+                </div>
+
+                <div class="customer-actions">
+                    <a href="{% url 'customers:detail' customer.pk %}" class="btn-action btn-primary-outline">
+                        <i class="fas fa-eye me-1"></i>
+                        View Details
+                    </a>
+                    <a href="{% url 'customers:edit' customer.pk %}" class="btn-action btn-primary-outline">
+                        <i class="fas fa-edit me-1"></i>
+                        Edit
+                    </a>
+                    <a href="{% url 'orders:create' %}?customer={{ customer.pk }}" class="btn-action btn-success-outline">
+                        <i class="fas fa-plus me-1"></i>
+                        New Order
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>No Customers Found</h3>
+                <p>{% if request.GET.search %}No customers match your search criteria.{% else %}You haven't added any customers yet.{% endif %}</p>
+                <a href="{% url 'customers:create' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Your First Customer
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-wrapper">
+        <nav aria-label="Customer pagination">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    let searchTimeout;
+    document.getElementById('customerSearch').addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchValue = e.target.value;
+            const statusValue = document.getElementById('statusFilter').value;
+            updateUrl(searchValue, statusValue);
+        }, 500);
+    });
+
+    // Status filter
+    document.getElementById('statusFilter').addEventListener('change', function(e) {
+        const searchValue = document.getElementById('customerSearch').value;
+        const statusValue = e.target.value;
+        updateUrl(searchValue, statusValue);
+    });
+
+    // Update URL and reload
+    function updateUrl(search, status) {
+        const params = new URLSearchParams();
+        if (search) params.set('search', search);
+        if (status) params.set('status', status);
+        
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.location.href = newUrl;
+    }
+
+    // Clear filters
+    function clearFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    // View Toggle Functionality
+    function switchView(viewType) {
+        const customerList = document.getElementById('customerList');
+        const cardBtn = document.getElementById('cardViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+        
+        // Remove existing view classes
+        customerList.classList.remove('card-view', 'list-view');
+        
+        // Remove active state from buttons
+        cardBtn.classList.remove('active');
+        listBtn.classList.remove('active');
+        
+        // Apply new view
+        if (viewType === 'card') {
+            customerList.classList.add('card-view');
+            cardBtn.classList.add('active');
+        } else {
+            customerList.classList.add('list-view');
+            listBtn.classList.add('active');
+        }
+        
+        // Save preference to localStorage
+        localStorage.setItem('customerViewPreference', viewType);
+    }
+
+    // Load saved view preference
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('customerViewPreference');
+        if (savedView && savedView === 'list') {
+            switchView('list');
+        }
+    });
+
+    // Add loading state to search
+    document.getElementById('customerSearch').addEventListener('input', function() {
+        document.body.style.cursor = 'wait';
+        setTimeout(() => {
+            document.body.style.cursor = 'default';
+        }, 1000);
+    });
+</script>
+{% endblock %}

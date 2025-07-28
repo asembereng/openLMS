@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Customer{% else %}Add Customer{% endif %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section h5 {
+        color: var(--dark-color);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--light-gray);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--medium-gray);
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        background: var(--light-gray);
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        background: white;
+    }
+
+    .form-text {
+        color: var(--text-gray);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .required-field {
+        position: relative;
+    }
+
+    .required-field .form-label::after {
+        content: '*';
+        color: var(--danger-color);
+        margin-left: 0.25rem;
+    }
+
+    .btn-group-form {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 2rem;
+        border-top: 1px solid var(--medium-gray);
+        margin-top: 2rem;
+    }
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--medium-gray);
+        color: var(--text-gray);
+    }
+
+    .btn-secondary:hover {
+        background: var(--text-gray);
+        color: white;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-group-text {
+        background: var(--medium-gray);
+        border: 1px solid var(--medium-gray);
+        color: var(--text-gray);
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+
+    .form-floating {
+        position: relative;
+    }
+
+    .form-floating > .form-control {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+    }
+
+    .form-floating > label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        padding: 1rem 0.75rem;
+        pointer-events: none;
+        border: 1px solid transparent;
+        transform-origin: 0 0;
+        transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        opacity: 0.65;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+
+    .customer-preview {
+        background: var(--light-gray);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .preview-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+    }
+
+    .preview-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding: 0.25rem 0;
+    }
+
+    .preview-label {
+        font-weight: 500;
+        color: var(--text-gray);
+    }
+
+    .preview-value {
+        color: var(--dark-color);
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .btn-group-form {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn-group-form .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-3"></i>
+            {% if form.instance.pk %}Edit Customer{% else %}Add New Customer{% endif %}
+        </h1>
+        <p>{% if form.instance.pk %}Update customer information{% else %}Add a new customer to your database{% endif %}</p>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <form method="post" id="customerForm">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h5><i class="fas fa-user me-2"></i>Basic Information</h5>
+                <div class="row g-3">
+                    <div class="col-md-6 required-field">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Full Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Enter the customer's full name</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            {{ form.phone }}
+                        </div>
+                        {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Primary contact number</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h5><i class="fas fa-envelope me-2"></i>Contact Information</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            {{ form.email }}
+                        </div>
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Optional email for notifications</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.is_active.id_for_label }}" class="form-label">Status</label>
+                        <select class="form-select" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}">
+                            <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                            <option value="False" {% if not form.is_active.value %}selected{% endif %}>Inactive</option>
+                        </select>
+                        <div class="form-text">Active customers can place orders</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="form-section">
+                <h5><i class="fas fa-map-marker-alt me-2"></i>Address Information</h5>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">Full Address</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Complete address for delivery purposes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="form-section">
+                <h5><i class="fas fa-sticky-note me-2"></i>Additional Information</h5>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Any special instructions or notes about this customer</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Preview -->
+            {% if form.instance.pk %}
+            <div class="customer-preview">
+                <div class="preview-title">Current Customer Information</div>
+                <div class="preview-item">
+                    <span class="preview-label">Customer ID:</span>
+                    <span class="preview-value">#{{ form.instance.pk|stringformat:"04d" }}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Created:</span>
+                    <span class="preview-value">{{ form.instance.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Total Orders:</span>
+                    <span class="preview-value">{{ form.instance.total_orders|default:0 }}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Total Spent:</span>
+                    <span class="preview-value">{{ CURRENCY_SYMBOL }}{{ form.instance.total_spent|default:0|floatformat:2 }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="btn-group-form">
+                <div>
+                    <a href="{% url 'customers:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Customers
+                    </a>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if form.instance.pk %}
+                        <a href="{% url 'customers:detail' form.instance.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-2"></i>
+                            View Customer
+                        </a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}Update Customer{% else %}Save Customer{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add form validation styling
+        const form = document.getElementById('customerForm');
+        const inputs = form.querySelectorAll('.form-control, .form-select');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    this.classList.add('filled');
+                } else {
+                    this.classList.remove('filled');
+                }
+            });
+            
+            // Initial check for pre-filled values
+            if (input.value.trim() !== '') {
+                input.classList.add('filled');
+            }
+        });
+
+        // Form submission with loading state
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            
+            // Re-enable if there are validation errors
+            setTimeout(() => {
+                if (form.querySelector('.text-danger')) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }, 1000);
+        });
+
+        // Real-time name formatting
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        if (nameInput) {
+            nameInput.addEventListener('input', function() {
+                // Capitalize first letter of each word
+                this.value = this.value.replace(/\b\w/g, l => l.toUpperCase());
+            });
+        }
+
+        // Phone number formatting
+        const phoneInput = document.getElementById('{{ form.phone.id_for_label }}');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                // Remove non-numeric characters except +
+                this.value = this.value.replace(/[^\d+]/g, '');
+            });
+        }
+    });
+</script>
+{% endblock %}

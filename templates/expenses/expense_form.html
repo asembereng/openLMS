@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Edit Expense - {{ block.super }}
+    {% else %}
+        Add New Expense - {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .form-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+    .currency-symbol {
+        background: #f8f9fa;
+        border-right: none;
+        font-weight: 600;
+        color: #495057;
+    }
+    .image-preview {
+        max-width: 200px;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    {% if form.instance.pk %}
+                        Edit Expense
+                    {% else %}
+                        Add New Expense
+                    {% endif %}
+                </h2>
+                <p class="mb-0 opacity-75">
+                    {% if form.instance.pk %}
+                        Update the details of this expense
+                    {% else %}
+                        Record a new business expense
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'expenses:list' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Expenses
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Basic Information
+                    </div>
+                    <div class="card-body">
+                        <!-- Category -->
+                        <div class="form-group">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                Category <span class="text-danger">*</span>
+                            </label>
+                            {{ form.category|add_class:"form-select" }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.category.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.category.help_text %}
+                                <div class="help-text">{{ form.category.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            {{ form.description|add_class:"form-control" }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.description.help_text %}
+                                <div class="help-text">{{ form.description.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="form-group">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                Amount <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text currency-symbol">{{ CURRENCY_SYMBOL }}</span>
+                                {{ form.amount|add_class:"form-control" }}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.amount.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.amount.help_text %}
+                                <div class="help-text">{{ form.amount.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Expense Date -->
+                        <div class="form-group">
+                            <label for="{{ form.expense_date.id_for_label }}" class="form-label">
+                                Expense Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.expense_date|add_class:"form-control" }}
+                            {% if form.expense_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.expense_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.expense_date.help_text %}
+                                <div class="help-text">{{ form.expense_date.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Details -->
+                <div class="form-card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Additional Details
+                    </div>
+                    <div class="card-body">
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                Notes
+                            </label>
+                            {{ form.notes|add_class:"form-control" }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.notes.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.notes.help_text %}
+                                <div class="help-text">{{ form.notes.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Receipt Image -->
+                        <div class="form-group">
+                            <label for="{{ form.receipt_image.id_for_label }}" class="form-label">
+                                Receipt Image
+                            </label>
+                            {{ form.receipt_image|add_class:"form-control" }}
+                            {% if form.receipt_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.receipt_image.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if form.receipt_image.help_text %}
+                                <div class="help-text">{{ form.receipt_image.help_text }}</div>
+                            {% endif %}
+                            
+                            <!-- Current image preview -->
+                            {% if form.instance.receipt_image %}
+                                <div class="mt-2">
+                                    <p class="small text-muted mb-1">Current receipt:</p>
+                                    <img src="{{ form.instance.receipt_image.url }}" alt="Current receipt" class="image-preview">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-card mt-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if form.instance.pk %}
+                                        Update Expense
+                                    {% else %}
+                                        Save Expense
+                                    {% endif %}
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today if creating new expense
+    {% if not form.instance.pk %}
+    const dateField = document.getElementById('{{ form.expense_date.id_for_label }}');
+    if (dateField && !dateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateField.value = today;
+    }
+    {% endif %}
+
+    // Image preview for receipt upload
+    const imageInput = document.getElementById('{{ form.receipt_image.id_for_label }}');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Remove existing preview
+                    const existingPreview = document.querySelector('.new-image-preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+                    
+                    // Create new preview
+                    const preview = document.createElement('div');
+                    preview.className = 'new-image-preview mt-2';
+                    preview.innerHTML = `
+                        <p class="small text-muted mb-1">New receipt preview:</p>
+                        <img src="${e.target.result}" alt="Receipt preview" class="image-preview">
+                    `;
+                    imageInput.parentNode.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous validation
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        
+        // Validate required fields
+        const requiredFields = ['{{ form.category.id_for_label }}', '{{ form.description.id_for_label }}', '{{ form.amount.id_for_label }}', '{{ form.expense_date.id_for_label }}'];
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && !field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        // Validate amount
+        const amountField = document.getElementById('{{ form.amount.id_for_label }}');
+        if (amountField && amountField.value) {
+            const amount = parseFloat(amountField.value);
+            if (amount <= 0) {
+                amountField.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+</script>
+{% endblock %}

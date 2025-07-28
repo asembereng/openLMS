@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Security Verification Failed - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    .error-content {
+        text-align: center;
+        color: #2d3436;
+        padding: 3rem;
+    }
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #e17055;
+    }
+    .error-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+    .error-description {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .error-actions {
+        margin-top: 2rem;
+    }
+    .error-actions .btn {
+        margin: 0 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .error-actions .btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1 class="error-title">Security Verification Failed</h1>
+            <p class="error-description">
+                Your request couldn't be verified for security reasons. This is likely because:
+                <br><br>
+                • Your session has expired<br>
+                • You're using an outdated form<br>
+                • There's a security token mismatch
+            </p>
+            
+            <div class="error-actions">
+                <button onclick="location.reload()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-redo"></i> Refresh Page
+                </button>
+                <a href="/dashboard/" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+            
+            {% if error_reason %}
+            <div class="mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> 
+                    Technical reason: {{ error_reason }}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-sync-alt fa-2x text-primary mb-3"></i>
+                    <h5>Quick Fix</h5>
+                    <p class="text-muted">
+                        Simply refresh this page to get a new security token and try again.
+                    </p>
+                    <button onclick="location.reload()" class="btn btn-outline-primary">
+                        <i class="fas fa-redo"></i> Refresh Now
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-info-circle fa-2x text-info mb-3"></i>
+                    <h5>Why This Happens</h5>
+                    <p class="text-muted">
+                        CSRF protection prevents malicious websites from performing actions 
+                        on your behalf. It's a security feature to keep your data safe.
+                    </p>
+                    <span class="badge bg-success">
+                        <i class="fas fa-shield-alt"></i> Security Feature
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

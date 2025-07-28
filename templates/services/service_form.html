@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{{ else }}Add{% endif %} Service - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .form-body {
+        padding: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc2626;
+    }
+
+    .form-control.is-invalid:focus {
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc2626;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
+
+    .form-check-label {
+        margin: 0;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #6366f1;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5855eb;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+
+    .back-link {
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+        color: #5855eb;
+        text-decoration: none;
+    }
+
+    .price-preview {
+        background: #f0f9ff;
+        border: 2px solid #0ea5e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .price-preview-title {
+        font-weight: 600;
+        color: #0c4a6e;
+        margin-bottom: 0.5rem;
+    }
+
+    .price-preview-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0ea5e9;
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .form-body {
+            padding: 1.5rem;
+        }
+        
+        .form-header {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'services:list' %}" class="back-link">
+    <i class="fas fa-arrow-left"></i> Back to Services
+</a>
+
+<div class="page-header">
+    <h1><i class="fas fa-concierge-bell"></i> {% if object %}Edit Service{% else %}Add New Service{% endif %}</h1>
+    <p>{% if object %}Update service details and pricing{% else %}Create a new laundry service{% endif %}</p>
+</div>
+
+<div class="form-container">
+    <div class="form-header">
+        <h2>Service Information</h2>
+    </div>
+    
+    <div class="form-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3 class="section-title">Basic Information</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            Service Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            Category <span class="text-danger">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.category.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.description.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">Pricing</h3>
+                
+                <div class="form-group">
+                    <label for="{{ form.price_per_dozen.id_for_label }}" class="form-label">
+                        Price per Dozen ({{ CURRENCY_SYMBOL }}) <span class="text-danger">*</span>
+                    </label>
+                    {{ form.price_per_dozen }}
+                    {% if form.price_per_dozen.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.price_per_dozen.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="price-preview" id="pricePreview" style="display: none;">
+                        <div class="price-preview-title">Unit Price:</div>
+                        <div class="price-preview-value" id="unitPrice">{{ CURRENCY_SYMBOL }}0.00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">Settings</h3>
+                
+                <div class="form-group">
+                    <label for="{{ form.display_order.id_for_label }}" class="form-label">
+                        Display Order
+                    </label>
+                    {{ form.display_order }}
+                    {% if form.display_order.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.display_order.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="text-muted">Lower numbers appear first in lists (0 = highest priority).</small>
+                </div>
+                
+                <div class="form-check">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                        Active Service
+                    </label>
+                </div>
+                <small class="text-muted">Inactive services won't be available for new orders.</small>
+            </div>
+            
+            <div class="btn-group">
+                <a href="{% url 'services:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if object %}Update Service{% else %}Create Service{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInput = document.getElementById('{{ form.price_per_dozen.id_for_label }}');
+    const pricePreview = document.getElementById('pricePreview');
+    const unitPriceDisplay = document.getElementById('unitPrice');
+    
+    function updateUnitPrice() {
+        const pricePerDozen = parseFloat(priceInput.value) || 0;
+        const unitPrice = pricePerDozen / 12;
+        
+        if (pricePerDozen > 0) {
+            unitPriceDisplay.textContent = `{{ CURRENCY_SYMBOL }}${unitPrice.toFixed(2)}`;
+            pricePreview.style.display = 'block';
+        } else {
+            pricePreview.style.display = 'none';
+        }
+    }
+    
+    priceInput.addEventListener('input', updateUnitPrice);
+    priceInput.addEventListener('change', updateUnitPrice);
+    
+    // Initial calculation
+    updateUnitPrice();
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Remove existing error classes
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-invalid');
+        });
+        
+        // Validate required fields
+        const requiredFields = [
+            { input: document.getElementById('{{ form.name.id_for_label }}'), name: 'Service Name' },
+            { input: document.getElementById('{{ form.category.id_for_label }}'), name: 'Category' },
+            { input: document.getElementById('{{ form.price_per_dozen.id_for_label }}'), name: 'Price per Dozen' }
+        ];
+        
+        requiredFields.forEach(field => {
+            if (!field.input.value.trim()) {
+                field.input.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        // Validate price is positive
+        const price = parseFloat(priceInput.value);
+        if (price <= 0) {
+            priceInput.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

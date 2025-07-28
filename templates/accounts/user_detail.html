@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ user_obj.get_full_name|default:user_obj.username }} - User Details - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-detail-page {
+        padding: 2rem 0;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        color: var(--dark-color);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    .user-header {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .user-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 2.5rem;
+    }
+    
+    .user-info h1 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark-color);
+        font-size: 2rem;
+    }
+    
+    .user-info .username {
+        color: var(--text-gray);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .user-badges {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .badge.status.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .badge.status.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge.role.admin {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge.role.normal {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-card h3 {
+        margin: 0 0 1.5rem 0;
+        color: var(--dark-color);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: var(--text-gray);
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card {
+        background: #f8fafc;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stat-card .number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .label {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-gray);
+        flex-shrink: 0;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-content .action {
+        color: var(--dark-color);
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .activity-content .timestamp {
+        color: var(--text-gray);
+        font-size: 0.85rem;
+    }
+    
+    .actions-bar {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: var(--text-gray);
+    }
+    
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .btn-danger:hover {
+        background: #fecaca;
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .user-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .actions-bar {
+            width: 100%;
+        }
+        
+        .btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-detail-page">
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-user"></i> User Details</h1>
+            <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+        
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="user-header-content">
+                <div class="user-avatar">
+                    {{ user_obj.first_name|first|default:user_obj.username|first|upper }}
+                </div>
+                <div class="user-info">
+                    <h1>{{ user_obj.get_full_name|default:user_obj.username }}</h1>
+                    <div class="username">@{{ user_obj.username }}</div>
+                    <div class="user-badges">
+                        <div class="badge status {% if user_obj.is_active %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-circle"></i>
+                            {% if user_obj.is_active %}Active{% else %}Inactive{% endif %}
+                        </div>
+                        <div class="badge role {% if user_obj.profile.role == 'admin' %}admin{% else %}normal{% endif %}">
+                            <i class="fas fa-{% if user_obj.profile.role == 'admin' %}crown{% else %}user{% endif %}"></i>
+                            {{ user_obj.profile.get_role_display }}
+                        </div>
+                        {% if user_obj.is_superuser %}
+                            <div class="badge role admin">
+                                <i class="fas fa-shield-alt"></i>
+                                Superuser
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- User Information -->
+            <div class="info-card">
+                <h3><i class="fas fa-info-circle"></i> User Information</h3>
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">Full Name</span>
+                        <span class="info-value">{{ user_obj.get_full_name|default:"Not provided" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">Username</span>
+                        <span class="info-value">{{ user_obj.username }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ user_obj.email|default:"Not provided" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">Date Joined</span>
+                        <span class="info-value">{{ user_obj.date_joined|date:"M d, Y H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">Last Login</span>
+                        <span class="info-value">{{ user_obj.last_login|date:"M d, Y H:i"|default:"Never" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">Status</span>
+                        <span class="info-value">
+                            {% if user_obj.is_active %}
+                                <span style="color: #166534;">Active</span>
+                            {% else %}
+                                <span style="color: #991b1b;">Inactive</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- User Statistics -->
+            <div class="info-card">
+                <h3><i class="fas fa-chart-bar"></i> Activity Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="number">{{ user_stats.orders_created }}</div>
+                        <div class="label">Orders Created</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">{{ user_stats.customers_created }}</div>
+                        <div class="label">Customers Created</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">{{ user_stats.expenses_created }}</div>
+                        <div class="label">Expenses Created</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activities -->
+            <div class="info-card full-width">
+                <h3><i class="fas fa-history"></i> Recent Activities</h3>
+                {% if recent_activities %}
+                    <ul class="activity-list">
+                        {% for activity in recent_activities %}
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-{% if 'created' in activity.action %}plus{% elif 'updated' in activity.action %}edit{% elif 'deleted' in activity.action %}trash{% else %}eye{% endif %}"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="action">{{ activity.action }}</div>
+                                    <div class="timestamp">{{ activity.timestamp|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p style="color: var(--text-gray); text-align: center; padding: 2rem;">
+                        No recent activities found.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="actions-bar">
+            <a href="{% url 'accounts:user_edit' user_obj.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit User
+            </a>
+            {% if user_obj.is_active %}
+                <a href="{% url 'accounts:user_deactivate' user_obj.pk %}" class="btn btn-danger">
+                    <i class="fas fa-user-slash"></i> Deactivate User
+                </a>
+            {% endif %}
+            <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">
+                <i class="fas fa-users"></i> View All Users
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

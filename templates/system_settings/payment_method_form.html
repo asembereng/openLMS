@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object.pk %}Edit Payment Method{% else %}Add Payment Method{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-credit-card"></i> 
+        {% if object.pk %}Edit Payment Method{% else %}Add Payment Method{% endif %}
+    </h2>
+    <a href="{% url 'system_settings:payment_methods' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Payment Methods
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.code.id_for_label }}" class="form-label">
+                                    Code <span class="text-danger">*</span>
+                                </label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.code.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Unique identifier (e.g., cash, card, mobile_money). Use lowercase letters, numbers, and underscores only.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Display Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Name shown to users (e.g., "Cash Payment", "Credit Card")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Optional description of this payment method
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.icon.id_for_label }}" class="form-label">Icon Class</label>
+                                {{ form.icon }}
+                                {% if form.icon.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.icon.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    FontAwesome icon class (e.g., fa-money-bill, fa-credit-card, fa-mobile-alt)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.sort_order.id_for_label }}" class="form-label">Sort Order</label>
+                                {{ form.sort_order }}
+                                {% if form.sort_order.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.sort_order.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Display order (lower numbers appear first)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    Whether this payment method is available for selection
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.requires_verification }}
+                                    <label class="form-check-label" for="{{ form.requires_verification.id_for_label }}">
+                                        Requires Verification
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    Whether this payment method needs additional verification
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'system_settings:payment_methods' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if object.pk %}Update Payment Method{% else %}Create Payment Method{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle"></i> Icon Preview</h6>
+            </div>
+            <div class="card-body">
+                <div id="icon-preview" class="text-center mb-3">
+                    <i id="preview-icon" class="fa-2x text-muted"></i>
+                    <p class="mt-2 mb-0"><small class="text-muted">Icon preview will appear here</small></p>
+                </div>
+                
+                <h6>Common Icons:</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-money-bill">
+                        <i class="fas fa-money-bill"></i> Cash
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-credit-card">
+                        <i class="fas fa-credit-card"></i> Card
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-mobile-alt">
+                        <i class="fas fa-mobile-alt"></i> Mobile
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-university">
+                        <i class="fas fa-university"></i> Bank
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-handshake">
+                        <i class="fas fa-handshake"></i> Credit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary icon-btn" data-icon="fa-wallet">
+                        <i class="fas fa-wallet"></i> Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
+    const previewIcon = document.getElementById('preview-icon');
+    const iconButtons = document.querySelectorAll('.icon-btn');
+    
+    // Add form-control class to form fields
+    const formControls = ['{{ form.code.id_for_label }}', '{{ form.name.id_for_label }}', '{{ form.description.id_for_label }}', '{{ form.icon.id_for_label }}', '{{ form.sort_order.id_for_label }}'];
+    formControls.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.classList.add('form-control');
+        }
+    });
+    
+    // Add form-check-input class to checkboxes
+    const checkboxes = ['{{ form.is_active.id_for_label }}', '{{ form.requires_verification.id_for_label }}'];
+    checkboxes.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.classList.add('form-check-input');
+        }
+    });
+    
+    // Update icon preview
+    function updateIconPreview() {
+        const iconClass = iconInput.value.trim();
+        if (iconClass) {
+            previewIcon.className = `fas ${iconClass} fa-2x text-primary`;
+        } else {
+            previewIcon.className = 'fa-2x text-muted';
+        }
+    }
+    
+    // Initial preview update
+    updateIconPreview();
+    
+    // Listen for icon input changes
+    iconInput.addEventListener('input', updateIconPreview);
+    
+    // Handle icon button clicks
+    iconButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const iconClass = this.getAttribute('data-icon');
+            iconInput.value = iconClass;
+            updateIconPreview();
+        });
+    });
+});
+</script>
+{% endblock %}

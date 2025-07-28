@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}System Audit Log - A&F Laundry Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-clipboard-list text-primary me-2"></i>
+            System Audit Log
+        </h1>
+        <p class="text-muted mb-0">View system activity and security audit trail</p>
+    </div>
+    <a href="{% url 'system_settings:admin_home' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Admin
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            Filters
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Action Type</label>
+                <select name="action_type" class="form-select">
+                    <option value="">All Actions</option>
+                    {% for value, label in action_types %}
+                    <option value="{{ value }}" {% if current_filters.action_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">User</label>
+                <select name="user" class="form-select">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if current_filters.user == user.id|stringformat:"s" %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Model</label>
+                <select name="model" class="form-select">
+                    <option value="">All Models</option>
+                    {% for model in models %}
+                    <option value="{{ model }}" {% if current_filters.model == model %}selected{% endif %}>
+                        {{ model }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    Filter
+                </button>
+                <a href="{% url 'system_settings:audit_log' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Audit Log Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Activity Log
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Model</th>
+                        <th>Object ID</th>
+                        <th>IP Address</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-nowrap">
+                            <small>{{ log.timestamp|date:"M d, Y" }}</small><br>
+                            <small class="text-muted">{{ log.timestamp|time:"H:i:s" }}</small>
+                        </td>
+                        <td>
+                            {% if log.user %}
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2">
+                                        {{ log.user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">{{ log.user.username }}</div>
+                                        {% if log.user.profile.is_admin %}
+                                            <small class="badge bg-danger">Admin</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">System</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.action_type == 'create' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-plus me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% elif log.action_type == 'update' %}
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-edit me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% elif log.action_type == 'delete' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-trash me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% elif log.action_type == 'login' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% elif log.action_type == 'logout' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-sign-out-alt me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-cog me-1"></i>
+                                    {{ log.get_action_type_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code class="small">{{ log.model_name }}</code>
+                        </td>
+                        <td>
+                            {% if log.object_id %}
+                                <code class="small">{{ log.object_id }}</code>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.ip_address %}
+                                <code class="small">{{ log.ip_address }}</code>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.changes %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                        onclick="showDetails('{{ log.id }}', {{ log.changes|safe }})" 
+                                        title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>
+                            No audit logs found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="card-footer">
+        <nav aria-label="Audit log pagination">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Audit Log Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="detailsContent" class="bg-light p-3 rounded"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+</style>
+
+<script>
+function showDetails(logId, changes) {
+    const content = document.getElementById('detailsContent');
+    content.textContent = JSON.stringify(changes, null, 2);
+    
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Report Templates - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .template-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .template-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .template-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .info-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .info-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .config-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .config-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .config-item:last-child {
+        border-bottom: none;
+    }
+
+    .config-key {
+        font-weight: 500;
+        color: var(--dark-color);
+    }
+
+    .config-value {
+        color: #6c757d;
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background: #545b62;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .access-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .access-public {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .access-restricted {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .roles-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+
+    .role-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="template-header">
+    <h1 class="template-title">{{ template.name }}</h1>
+    <p class="template-subtitle">{{ template.get_report_type_display }} Template</p>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons">
+    <a href="{% url 'reports:report_generate' %}?template_id={{ template.pk }}" class="btn-action btn-primary">
+        <i class="fas fa-play"></i>
+        Generate Report
+    </a>
+    <a href="{% url 'reports:template_list' %}" class="btn-action btn-secondary">
+        <i class="fas fa-arrow-left"></i>
+        Back to Templates
+    </a>
+</div>
+
+<!-- Template Information -->
+<div class="info-section">
+    <h2 class="section-title">
+        <i class="fas fa-info-circle"></i>
+        Template Information
+    </h2>
+    
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-tag"></i>
+            </div>
+            <div class="info-label">Type</div>
+            <div class="info-value">{{ template.get_report_type_display }}</div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-{{ template.is_public|yesno:'globe,lock' }}"></i>
+            </div>
+            <div class="info-label">Access</div>
+            <div class="info-value">
+                <span class="access-badge {% if template.is_public %}access-public{% else %}access-restricted{% endif %}">
+                    <i class="fas fa-{{ template.is_public|yesno:'globe,lock' }}"></i>
+                    {{ template.is_public|yesno:'Public,Restricted' }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="info-label">Created By</div>
+            <div class="info-value">{{ template.created_by.get_full_name|default:template.created_by.username }}</div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="info-label">Created</div>
+            <div class="info-value">{{ template.created_at|date:"M d, Y" }}</div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="info-label">Last Updated</div>
+            <div class="info-value">{{ template.updated_at|date:"M d, Y" }}</div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-{{ template.is_active|yesno:'check-circle,times-circle' }}"></i>
+            </div>
+            <div class="info-label">Status</div>
+            <div class="info-value">{{ template.is_active|yesno:'Active,Inactive' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Description -->
+{% if template.description %}
+<div class="info-section">
+    <h2 class="section-title">
+        <i class="fas fa-file-text"></i>
+        Description
+    </h2>
+    <p class="mb-0">{{ template.description }}</p>
+</div>
+{% endif %}
+
+<!-- Access Control -->
+{% if not template.is_public and template.allowed_roles %}
+<div class="info-section">
+    <h2 class="section-title">
+        <i class="fas fa-users"></i>
+        Allowed Roles
+    </h2>
+    <div class="roles-list">
+        {% for role in template.allowed_roles %}
+            <span class="role-badge">{{ role|title }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Configuration -->
+{% if template.config %}
+<div class="config-section">
+    <h2 class="section-title">
+        <i class="fas fa-cogs"></i>
+        Template Configuration
+    </h2>
+    
+    {% for key, value in template.config.items %}
+    <div class="config-item">
+        <span class="config-key">{{ key|title }}</span>
+        <span class="config-value">
+            {% if value|length > 50 %}
+                {{ value|truncatechars:50 }}
+            {% else %}
+                {{ value }}
+            {% endif %}
+        </span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Recent Reports -->
+<div class="info-section">
+    <h2 class="section-title">
+        <i class="fas fa-history"></i>
+        Recent Reports Generated
+    </h2>
+    
+    {% if template.generated_reports.all %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Generated By</th>
+                    <th>Generated Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in template.generated_reports.all|slice:":10" %}
+                <tr>
+                    <td>
+                        <strong>{{ report.title }}</strong>
+                    </td>
+                    <td>{{ report.generated_by.get_full_name|default:report.generated_by.username }}</td>
+                    <td>{{ report.generated_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <span class="badge bg-{{ report.status|yesno:'success,warning,danger' }}">
+                            {{ report.get_status_display|default:'Completed' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'reports:report_detail' report.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if template.generated_reports.count > 10 %}
+    <div class="text-center mt-3">
+        <a href="{% url 'reports:report_list' %}?template={{ template.pk }}" class="btn btn-outline-primary">
+            View All Reports ({{ template.generated_reports.count }})
+        </a>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-file-alt fa-2x mb-2"></i>
+        <p>No reports generated from this template yet.</p>
+        <button class="btn btn-primary" onclick="generateFromTemplate({{ template.pk }})">
+            <i class="fas fa-play"></i>
+            Generate First Report
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Generate Report Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateReportModalLabel">Generate Report from Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generateReportForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="templateId" name="template_id" value="{{ template.pk }}">
+                    <div class="mb-3">
+                        <label for="reportTitle" class="form-label">Report Title</label>
+                        <input type="text" class="form-control" id="reportTitle" name="title" 
+                               value="{{ template.name }} - {{ 'now'|date:'M d, Y' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="start_date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="reportDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="reportDescription" name="description" rows="3" 
+                                  placeholder="Add any additional notes about this report..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReportGeneration()">
+                    <i class="fas fa-play"></i>
+                    Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Generate report from template
+function generateFromTemplate(templateId) {
+    document.getElementById('templateId').value = templateId;
+    
+    // Set default dates (last 30 days)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('generateReportModal'));
+    modal.show();
+}
+
+// Submit report generation
+function submitReportGeneration() {
+    const form = document.getElementById('generateReportForm');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = event.target;
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    submitBtn.disabled = true;
+    
+    fetch('/reports/api/templates/' + formData.get('template_id') + '/generate/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: formData.get('title'),
+            description: formData.get('description'),
+            parameters: {
+                start_date: formData.get('start_date'),
+                end_date: formData.get('end_date')
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.id) {
+            // Close modal and redirect to report detail
+            bootstrap.Modal.getInstance(document.getElementById('generateReportModal')).hide();
+            
+            // Show success message
+            if (data.id) {
+                window.location.href = '/reports/' + data.id + '/';
+            } else {
+                window.location.href = '/reports/';
+            }
+        } else {
+            alert(data.error || 'Failed to generate report');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to generate report. Please try again.');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalHTML;
+        submitBtn.disabled = false;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

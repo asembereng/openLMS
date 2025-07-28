@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+    .quick-action-card {
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s ease;
+    }
+    .quick-action-card:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .recent-activity {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-tshirt me-2"></i>
+                        Welcome to A&F Laundry Services
+                    </h2>
+                    <p class="card-text mt-2 mb-0">
+                        {% if user.is_authenticated %}
+                            Hello, {{ user.get_full_name|default:user.username }}! 
+                            {% if user.profile.is_admin %}
+                                You have administrator access.
+                            {% else %}
+                                Welcome back to your dashboard.
+                            {% endif %}
+                        {% else %}
+                            Please log in to access the system.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Orders</h6>
+                            <h3 class="mb-0" id="totalOrders">-</h3>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Today's Revenue</h6>
+                            <h3 class="mb-0" id="todayRevenue">-</h3>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Customers</h6>
+                            <h3 class="mb-0" id="activeCustomers">-</h3>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Orders</h6>
+                            <h3 class="mb-0" id="pendingOrders">-</h3>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Quick Actions</h5>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="{% url 'orders:create' %}" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                        <h6 class="card-title">New Order</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="{% url 'customers:create' %}" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-user-plus fa-2x text-success mb-2"></i>
+                        <h6 class="card-title">Add Customer</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="{% url 'services:create' %}" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-cog fa-2x text-info mb-2"></i>
+                        <h6 class="card-title">Add Service</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="{% url 'expenses:create' %}" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-receipt fa-2x text-warning mb-2"></i>
+                        <h6 class="card-title">Add Expense</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="{% url 'reports:template_list' %}" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chart-bar fa-2x text-secondary mb-2"></i>
+                        <h6 class="card-title">Reports</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <a href="/admin/" class="text-decoration-none">
+                <div class="card quick-action-card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-cogs fa-2x text-dark mb-2"></i>
+                        <h6 class="card-title">Admin</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Charts -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>
+                        Recent Orders
+                    </h6>
+                </div>
+                <div class="card-body recent-activity" id="recentOrders">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Revenue Trend (Last 7 Days)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueTrendChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Not authenticated -->
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Access Restricted</h4>
+                <p class="text-muted">Please log in to access the dashboard.</p>
+                <a href="{% url 'account_login' %}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-1"></i>
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadRecentOrders();
+    initRevenueTrendChart();
+});
+
+function loadDashboardStats() {
+    // Load overall stats
+    Promise.all([
+        fetch('/orders/api/orders/stats/').then(r => r.json()).catch(() => ({})),
+        fetch('/customers/api/customers/stats/').then(r => r.json()).catch(() => ({})),
+    ]).then(([orderStats, customerStats]) => {
+        document.getElementById('totalOrders').textContent = orderStats.total_orders || '0';
+        document.getElementById('todayRevenue').textContent = '{{ CURRENCY_SYMBOL }}' + (orderStats.today_revenue || '0.00');
+        document.getElementById('activeCustomers').textContent = customerStats.total_customers || '0';
+        document.getElementById('pendingOrders').textContent = orderStats.pending_orders || '0';
+    }).catch(console.error);
+}
+
+function loadRecentOrders() {
+    fetch('/orders/api/orders/?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('recentOrders');
+            if (data.results && data.results.length > 0) {
+                container.innerHTML = data.results.map(order => `
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <strong>#${order.order_number}</strong><br>
+                            <small class="text-muted">${order.customer_name}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span><br>
+                            <small class="text-muted">{{ CURRENCY_SYMBOL }}${order.total_amount}</small>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">No recent orders</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading recent orders:', error);
+            document.getElementById('recentOrders').innerHTML = '<p class="text-muted text-center">Error loading orders</p>';
+        });
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'processing': 'info',
+        'completed': 'success',
+        'cancelled': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function initRevenueTrendChart() {
+    const ctx = document.getElementById('revenueTrendChart').getContext('2d');
+    
+    // Sample data - replace with actual API call
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['6 days ago', '5 days ago', '4 days ago', '3 days ago', '2 days ago', 'Yesterday', 'Today'],
+            datasets: [{
+                label: 'Revenue ({{ CURRENCY_SYMBOL }})',
+                data: [0, 0, 0, 0, 0, 0, 0],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '{{ CURRENCY_SYMBOL }}' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Load actual revenue data
+    fetch('/orders/api/orders/revenue-trend/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.trend) {
+                chart.data.datasets[0].data = data.trend.map(item => item.revenue);
+                chart.data.labels = data.trend.map(item => item.date);
+                chart.update();
+            }
+        })
+        .catch(console.error);
+}
+</script>
+{% endif %}
+{% endblock %}

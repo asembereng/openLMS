@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Loyalty Accounts</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Points Balance</th>
+            <th>Tier</th>
+            <th>Tier Expiry</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for account in accounts %}
+        <tr>
+            <td>{{ account.customer.name }}</td>
+            <td>{{ account.points_balance }}</td>
+            <td>{{ account.tier }}</td>
+            <td>{{ account.tier_expiry }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

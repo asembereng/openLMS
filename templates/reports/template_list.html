@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Templates - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .controls-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+        position: relative;
+        max-width: 400px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .search-box input {
+        padding-left: 3rem;
+        border-radius: 25px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .template-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .template-filter {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background: #f8f9fa;
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .template-filter:hover, .template-filter.active {
+        background: var(--primary-color);
+        color: white;
+        text-decoration: none;
+    }
+
+    .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .template-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        position: relative;
+    }
+
+    .template-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: var(--primary-color);
+    }
+
+    .template-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .template-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .template-type {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .template-description {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .template-access {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+    }
+
+    .access-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-gray);
+    }
+
+    .access-item i {
+        color: var(--success-color);
+    }
+
+    .template-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-outline {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+
+    .btn-primary-outline:hover {
+        background: var(--primary-color);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-success-outline {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-success-outline:hover {
+        background: var(--success-color);
+        color: white;
+        text-decoration: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: var(--text-gray);
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #d1d5db;
+    }
+
+    /* View Toggle Styles */
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .view-toggle-btn {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #6c757d;
+    }
+
+    .view-toggle-btn:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* List View Styles */
+    .template-grid.list-view {
+        display: block;
+    }
+
+    .template-grid.list-view .template-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+    }
+
+    .template-grid.list-view .template-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .template-grid.list-view .template-header {
+        flex: 2;
+        margin-bottom: 0;
+    }
+
+    .template-grid.list-view .template-access {
+        flex: 1;
+        margin-bottom: 0;
+        justify-content: center;
+    }
+
+    .template-grid.list-view .template-actions {
+        flex: 0 0 auto;
+        margin-left: 1rem;
+    }
+
+    .template-grid.list-view .template-description {
+        display: none;
+    }
+
+    /* Card View Styles (Default) */
+    .template-grid.card-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .template-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .controls-section .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .template-filters {
+            margin-top: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-file-alt"></i> Report Templates</h1>
+    <p>Manage and create report templates for your business analytics</p>
+</div>
+
+<div class="controls-section mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" class="form-control form-control-lg" placeholder="Search templates..." id="template-search">
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="view-toggle">
+                <button type="button" class="view-toggle-btn active" id="cardViewBtn" onclick="switchView('card')">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <button type="button" class="view-toggle-btn" id="listViewBtn" onclick="switchView('list')">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+            <a href="{% url 'reports:report_list' %}" class="btn btn-secondary">
+                <i class="fas fa-chart-bar"></i> Generated Reports
+            </a>
+        </div>
+    </div>
+    
+    <div class="template-filters">
+        <a href="{% url 'reports:template_list' %}" class="template-filter {% if not request.GET.type %}active{% endif %}">
+            All Templates
+        </a>
+        <a href="?type=daily_sales" class="template-filter {% if request.GET.type == 'daily_sales' %}active{% endif %}">
+            Daily Sales
+        </a>
+        <a href="?type=monthly_profit" class="template-filter {% if request.GET.type == 'monthly_profit' %}active{% endif %}">
+            Monthly Profit
+        </a>
+        <a href="?type=customer_statement" class="template-filter {% if request.GET.type == 'customer_statement' %}active{% endif %}">
+            Customer Statement
+        </a>
+        <a href="?type=expense_summary" class="template-filter {% if request.GET.type == 'expense_summary' %}active{% endif %}">
+            Expense Summary
+        </a>
+        <a href="?type=service_analysis" class="template-filter {% if request.GET.type == 'service_analysis' %}active{% endif %}">
+            Service Analysis
+        </a>
+        <a href="?type=custom" class="template-filter {% if request.GET.type == 'custom' %}active{% endif %}">
+            Custom
+        </a>
+    </div>
+</div>
+
+{% if templates %}
+<div class="template-grid card-view" id="templateGrid">
+    {% for template in templates %}
+    <div class="template-card">
+        <div class="template-info">
+            <div class="template-header">
+                <div>
+                    <div class="template-name">{{ template.name }}</div>
+                    <span class="template-type">{{ template.get_report_type_display }}</span>
+                </div>
+            </div>
+            
+            {% if template.description %}
+            <div class="template-description">
+                {{ template.description|truncatewords:20 }}
+            </div>
+            {% endif %}
+            
+            <div class="template-access">
+                <div class="access-item">
+                    <i class="fas fa-{{ template.is_public|yesno:'globe,lock' }}"></i>
+                    <span>{{ template.is_public|yesno:'Public,Restricted' }}</span>
+                </div>
+                <div class="access-item">
+                    <i class="fas fa-user"></i>
+                    <span>{{ template.created_by.get_full_name|default:template.created_by.username }}</span>
+                </div>
+                <div class="access-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ template.created_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="template-actions">
+            <a href="{% url 'reports:template_detail' template.pk %}" class="btn-action btn-primary-outline">
+                <i class="fas fa-eye"></i>
+                View Details
+            </a>
+            <a href="{% url 'reports:report_generate' %}?template_id={{ template.pk }}" class="btn-action btn-success-outline">
+                <i class="fas fa-play"></i>
+                Generate Report
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav aria-label="Template pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">Previous</a>
+            </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">Last</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-file-alt"></i>
+    <h3>No Report Templates Found</h3>
+    <p>{% if request.GET.search %}No templates match your search criteria.{% else %}No report templates have been created yet.{% endif %}</p>
+</div>
+{% endif %}
+
+<!-- Generate Report Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateReportModalLabel">Generate Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generateReportForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="templateId" name="template_id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReportGeneration()">Generate Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// View Toggle Functionality (Global function)
+function switchView(viewType) {
+    const templateGrid = document.getElementById('templateGrid');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const listBtn = document.getElementById('listViewBtn');
+    
+    // Remove existing view classes
+    templateGrid.classList.remove('card-view', 'list-view');
+    
+    // Remove active state from buttons
+    cardBtn.classList.remove('active');
+    listBtn.classList.remove('active');
+    
+    // Apply new view
+    if (viewType === 'card') {
+        templateGrid.classList.add('card-view');
+        cardBtn.classList.add('active');
+    } else {
+        templateGrid.classList.add('list-view');
+        listBtn.classList.add('active');
+    }
+    
+    // Save preference to localStorage
+    localStorage.setItem('templateViewPreference', viewType);
+}
+
+// Generate report from template
+function generateFromTemplate(templateId) {
+    fetch(`/reports/api/templates/${templateId}/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(template => {
+        if (template) {
+            document.getElementById('templateId').value = template.id;
+            document.getElementById('reportTitle').value = template.name;
+
+            // Dynamically adjust modal fields based on template parameters
+            adjustModalFields(template);
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('generateReportModal'));
+            modal.show();
+        } else {
+            showError('Failed to load template details.');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading template details:', error);
+        showError('An unexpected error occurred. Please try again.');
+    });
+}
+
+function adjustModalFields(template) {
+    const modalBody = document.querySelector('#generateReportModal .modal-body form');
+    modalBody.innerHTML = '';
+
+    // Add report title field
+    modalBody.innerHTML += `
+        <div class="mb-3">
+            <label for="reportTitle" class="form-label">Report Title</label>
+            <input type="text" class="form-control" id="reportTitle" name="title" value="${template.name}" required>
+        </div>
+    `;
+
+    // Dynamically add parameters
+    template.parameters.forEach(param => {
+        modalBody.innerHTML += generateDynamicField(param);
+    });
+}
+
+function generateDynamicField(param) {
+    let fieldHTML = `<div class="mb-3">`;
+    fieldHTML += `<label class="form-label">${param.label}</label>`;
+
+    switch (param.type) {
+        case 'date':
+            fieldHTML += `<input type="date" class="form-control" name="${param.name}" required>`;
+            break;
+        case 'text':
+            fieldHTML += `<input type="text" class="form-control" name="${param.name}" required>`;
+            break;
+        case 'select':
+            fieldHTML += `<select class="form-select" name="${param.name}" required>`;
+            param.options.forEach(option => {
+                fieldHTML += `<option value="${option.value}">${option.label}</option>`;
+            });
+            fieldHTML += `</select>`;
+            break;
+        case 'checkbox':
+            fieldHTML += `<div class="form-check">
+                <input class="form-check-input" type="checkbox" name="${param.name}" id="${param.name}">
+                <label class="form-check-label" for="${param.name}">${param.label}</label>
+            </div>`;
+            break;
+    }
+
+    fieldHTML += `</div>`;
+    return fieldHTML;
+}
+
+function submitReportGeneration() {
+    const form = document.getElementById('generateReportForm');
+    const formData = new FormData(form);
+
+    fetch('/reports/ajax/generate/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Report generated successfully!');
+            location.reload();
+        } else {
+            showError(data.error || 'Failed to generate report.');
+        }
+    })
+    .catch(error => {
+        console.error('Error generating report:', error);
+        showError('An unexpected error occurred. Please try again.');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = this.value.trim();
+            const url = new URL(window.location);
+            
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+            
+            url.searchParams.delete('page'); // Reset to first page
+            window.location.href = url.toString();
+        }, 500);
+    });
+
+    // Load saved view preference
+    const savedView = localStorage.getItem('templateViewPreference');
+    if (savedView && savedView === 'list') {
+        switchView('list');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}System Configuration - A&F Laundry Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-cog text-primary me-2"></i>
+            System Configuration
+        </h1>
+        <p class="text-muted mb-0">Configure company information, currency, and system settings</p>
+    </div>
+    <a href="{% url 'system_settings:admin_home' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Admin
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Company Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>
+                        Company Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.company_name.id_for_label }}" class="form-label">Company Name</label>
+                            {{ form.company_name|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.company_email.id_for_label }}" class="form-label">Company Email</label>
+                            {{ form.company_email|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.company_phone.id_for_label }}" class="form-label">Company Phone</label>
+                            {{ form.company_phone|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tax_id.id_for_label }}" class="form-label">Tax ID</label>
+                            {{ form.tax_id|add_class:"form-control" }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="{{ form.company_address.id_for_label }}" class="form-label">Company Address</label>
+                            {{ form.company_address|add_class:"form-control" }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="{{ form.company_logo.id_for_label }}" class="form-label">Company Logo</label>
+                            {{ form.company_logo|add_class:"form-control" }}
+                            <div class="form-text">Recommended size: 200x60px PNG format</div>
+                            {% if object.company_logo %}
+                            <div class="mt-2">
+                                <img src="{{ object.company_logo.url }}" alt="Current logo" class="img-thumbnail" style="max-height: 60px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currency & Localization -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-money-bill me-2"></i>
+                        Currency & Localization
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.currency_symbol.id_for_label }}" class="form-label">Currency Symbol</label>
+                            {{ form.currency_symbol|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.currency_code.id_for_label }}" class="form-label">Currency Code</label>
+                            {{ form.currency_code|add_class:"form-control" }}
+                            <div class="form-text">ISO 4217 currency code (e.g., USD, NGN, EUR)</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.decimal_places.id_for_label }}" class="form-label">Decimal Places</label>
+                            {{ form.decimal_places|add_class:"form-control" }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="{{ form.timezone.id_for_label }}" class="form-label">Timezone</label>
+                            {{ form.timezone|add_class:"form-select" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Rules -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        Business Rules
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.default_pieces_per_dozen.id_for_label }}" class="form-label">Pieces per Dozen</label>
+                            {{ form.default_pieces_per_dozen|add_class:"form-control" }}
+                            <div class="form-text">Default number of pieces per dozen for pricing calculations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Features -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-toggles me-2"></i>
+                        System Features
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.allow_customer_registration|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.allow_customer_registration.id_for_label }}">
+                                    Allow Customer Registration
+                                </label>
+                                <div class="form-text">Allow customers to create their own accounts</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.require_email_verification|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.require_email_verification.id_for_label }}">
+                                    Require Email Verification
+                                </label>
+                                <div class="form-text">Require email verification for new accounts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Status Messages -->
+            <div id="formMessages"></div>
+            
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save me-1"></i>
+                    Save Configuration
+                </button>
+            </div>
+        </form>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form');
+                const saveBtn = document.getElementById('saveBtn');
+                
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Stop normal form submission
+                    console.log('Form submission intercepted');
+                    
+                    // Get form data
+                    const formData = new FormData(form);
+                    const formDataObj = {};
+                    formData.forEach((value, key) => {
+                        formDataObj[key] = value instanceof File ? value.name : value;
+                    });
+                    console.log('Form data:', formDataObj);
+                    
+                    // Show loading state
+                    const originalBtnText = saveBtn.innerHTML;
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+                    
+                    // Submit the form using fetch API
+                    fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            // Don't set Content-Type header as it's set by the browser for multipart/form-data
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        console.log('Form submitted successfully');
+                        
+                        // Show success message
+                        const messagesContainer = document.getElementById('formMessages');
+                        messagesContainer.innerHTML = `
+                            <div class="alert alert-success alert-dismissible fade show mb-3">
+                                <strong>Success!</strong> System configuration updated successfully.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        
+                        // Reload the page after 2 seconds to show updated data
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error submitting form:', error);
+                        
+                        // Show error message
+                        const messagesContainer = document.getElementById('formMessages');
+                        messagesContainer.innerHTML = `
+                            <div class="alert alert-danger alert-dismissible fade show mb-3">
+                                <strong>Error!</strong> Failed to update system configuration. Please try again.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalBtnText;
+                    });
+                });
+            });
+        </script>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Current Configuration Summary -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Current Configuration
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Company:</strong><br>
+                    <span class="text-muted">{{ object.company_name }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Currency:</strong><br>
+                    <span class="text-muted">{{ object.currency_symbol }} ({{ object.currency_code }})</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Timezone:</strong><br>
+                    <span class="text-muted">{{ object.timezone }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Pricing:</strong><br>
+                    <span class="text-muted">{{ object.default_pieces_per_dozen }} pieces per dozen</span>
+                </div>
+                {% if object.updated_at %}
+                <div class="mb-0">
+                    <strong>Last Updated:</strong><br>
+                    <span class="text-muted">{{ object.updated_at|date:"M d, Y H:i" }}</span>
+                    {% if object.updated_by %}
+                        <br><small>by {{ object.updated_by.username }}</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Help -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Help
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    <strong>Company Information:</strong> This information will be displayed throughout the system and on invoices.
+                </p>
+                <p class="small text-muted mb-2">
+                    <strong>Currency Settings:</strong> Changes will affect how prices are displayed but won't convert existing data.
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Timezone:</strong> Used for displaying dates and times. Server times are stored in UTC.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

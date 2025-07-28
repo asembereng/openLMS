@@ -1,0 +1,402 @@
+{% load static %}
+
+<!-- User Detail Content Only (for inclusion) -->
+<div class="user-detail-page">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-user"></i> User Details
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'system_settings:user_edit' user_obj.pk %}" class="btn-main">
+                <i class="fas fa-edit"></i> Edit User
+            </a>
+        </div>
+    </div>
+
+    <!-- User Header -->
+    <div class="user-header">
+        <div class="user-header-content">
+            <div class="user-avatar">
+                {{ user_obj.get_full_name|slice:":2"|upper|default:user_obj.username|slice:":2"|upper }}
+            </div>
+            <div class="user-basic-info">
+                <h2>{{ user_obj.get_full_name|default:user_obj.username }}</h2>
+                <p class="username">@{{ user_obj.username }}</p>
+                {% if user_obj.email %}
+                    <p class="email">
+                        <i class="fas fa-envelope"></i> {{ user_obj.email }}
+                    </p>
+                {% endif %}
+                <div class="status-badges">
+                    {% if user_obj.is_active %}
+                        <span class="status-badge active">Active</span>
+                    {% else %}
+                        <span class="status-badge inactive">Inactive</span>
+                    {% endif %}
+                    {% if user_obj.is_superuser %}
+                        <span class="role-badge admin">Administrator</span>
+                    {% else %}
+                        <span class="role-badge user">Normal User</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Information Grid -->
+    <div class="content-grid">
+        <!-- Account Information -->
+        <div class="info-card">
+            <h3><i class="fas fa-user-circle"></i> Account Information</h3>
+            <ul class="info-list">
+                <li>
+                    <span class="info-label">Username:</span>
+                    <span class="info-value">{{ user_obj.username }}</span>
+                </li>
+                {% if user_obj.email %}
+                <li>
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ user_obj.email }}</span>
+                </li>
+                {% endif %}
+                {% if user_obj.first_name %}
+                <li>
+                    <span class="info-label">First Name:</span>
+                    <span class="info-value">{{ user_obj.first_name }}</span>
+                </li>
+                {% endif %}
+                {% if user_obj.last_name %}
+                <li>
+                    <span class="info-label">Last Name:</span>
+                    <span class="info-value">{{ user_obj.last_name }}</span>
+                </li>
+                {% endif %}
+                <li>
+                    <span class="info-label">Date Joined:</span>
+                    <span class="info-value">{{ user_obj.date_joined|date:"M d, Y H:i" }}</span>
+                </li>
+                {% if user_obj.last_login %}
+                <li>
+                    <span class="info-label">Last Login:</span>
+                    <span class="info-value">{{ user_obj.last_login|date:"M d, Y H:i" }}</span>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- User Permissions -->
+        <div class="info-card">
+            <h3><i class="fas fa-shield-alt"></i> Permissions & Role</h3>
+            <ul class="info-list">
+                <li>
+                    <span class="info-label">Role:</span>
+                    <span class="info-value">
+                        {% if user_obj.is_superuser %}
+                            Administrator
+                        {% else %}
+                            Normal User
+                        {% endif %}
+                    </span>
+                </li>
+                <li>
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if user_obj.is_active %}
+                            <span style="color: green;">Active</span>
+                        {% else %}
+                            <span style="color: red;">Inactive</span>
+                        {% endif %}
+                    </span>
+                </li>
+                <li>
+                    <span class="info-label">Staff Access:</span>
+                    <span class="info-value">
+                        {% if user_obj.is_staff %}Yes{% else %}No{% endif %}
+                    </span>
+                </li>
+                <li>
+                    <span class="info-label">Superuser:</span>
+                    <span class="info-value">
+                        {% if user_obj.is_superuser %}Yes{% else %}No{% endif %}
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+        <a href="{% url 'system_settings:user_edit' user_obj.pk %}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit User
+        </a>
+        {% if user_obj != request.user %}
+            {% if user_obj.is_active %}
+                <button onclick="toggleUserStatus({{ user_obj.pk }}, 'deactivate')" class="btn btn-warning">
+                    <i class="fas fa-user-slash"></i> Deactivate User
+                </button>
+            {% else %}
+                <button onclick="toggleUserStatus({{ user_obj.pk }}, 'activate')" class="btn btn-success">
+                    <i class="fas fa-user-check"></i> Activate User
+                </button>
+            {% endif %}
+        {% endif %}
+        <a href="{% url 'system_settings:user_list' %}" class="btn btn-secondary">
+            <i class="fas fa-users"></i> View All Users
+        </a>
+    </div>
+</div>
+
+<!-- CSS Styles for User Detail -->
+<style>
+    .user-detail-page {
+        padding: 2rem 0;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        color: var(--dark-color);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    .user-header {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .user-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+    
+    .user-basic-info h2 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark-color);
+        font-size: 1.8rem;
+    }
+    
+    .user-basic-info .username {
+        color: var(--primary-color);
+        font-weight: 500;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .user-basic-info .email {
+        color: var(--text-gray);
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-badges {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .status-badge, .role-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .role-badge.admin {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+    
+    .role-badge.user {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-card h3 {
+        margin: 0 0 1.5rem 0;
+        color: var(--dark-color);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: var(--text-gray);
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+    
+    .actions-bar {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+    }
+    
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        background: #d97706;
+    }
+    
+    .btn-success {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #059669;
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: var(--dark-color);
+    }
+    
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .user-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .actions-bar {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<!-- JavaScript for User Detail -->
+<script>
+function toggleUserStatus(userId, action) {
+    if (!confirm(`Are you sure you want to ${action} this user?`)) {
+        return;
+    }
+    
+    fetch(`/admin-settings/users/${userId}/toggle-${action}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update user status'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>

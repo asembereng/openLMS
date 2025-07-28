@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ customer.name }} - Customer Details - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --card-bg: #ffffff;
+        --card-border-radius: 1rem;
+        --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --tab-active-border: var(--primary-color);
+        --tab-inactive-color: var(--text-gray);
+        --stat-icon-bg: var(--primary-light);
+    }
+
+    .detail-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-main {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .customer-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .customer-title h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--dark-color);
+    }
+
+    .customer-title p {
+        font-size: 1rem;
+        color: var(--text-gray);
+        margin: 0;
+    }
+    
+    .header-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tabs-container {
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 2rem;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .tab-link {
+        padding: 1rem 0.5rem;
+        font-weight: 600;
+        color: var(--tab-inactive-color);
+        text-decoration: none;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .tab-link.active,
+    .tab-link:hover {
+        color: var(--primary-color);
+        border-bottom-color: var(--tab-active-border);
+    }
+    
+    .tab-link .icon {
+        margin-right: 0.5rem;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .grid-layout-2 {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1.5rem;
+    }
+
+    .info-card {
+        background: var(--card-bg);
+        border-radius: var(--card-border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .card-header .icon {
+        font-size: 1.25rem;
+        color: var(--primary-color);
+    }
+
+    .card-header h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0;
+    }
+
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+
+    .info-list .label {
+        font-weight: 500;
+        color: var(--text-gray);
+    }
+
+    .info-list .value {
+        font-weight: 600;
+        color: var(--dark-color);
+        text-align: right;
+    }
+    
+    .info-list .value a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .info-list .value a:hover {
+        text-decoration: underline;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-inactive {
+        background-color: #e5e7eb;
+        color: #4b5563;
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-item {
+        background: var(--card-bg);
+        border-radius: var(--card-border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .stat-item .icon {
+        font-size: 1.75rem;
+        color: var(--primary-color);
+        background-color: var(--stat-icon-bg);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stat-content .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+    
+    .stat-content .label {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+    }
+    
+    .order-history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .order-history-table th, .order-history-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .order-history-table th {
+        font-weight: 600;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+    
+    .order-history-table td .status {
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .grid-layout-2 {
+            grid-template-columns: 1fr;
+        }
+        .detail-page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .tabs {
+            gap: 1rem;
+            overflow-x: auto;
+        }
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Customer Header -->
+    <div class="detail-page-header">
+        <div class="header-main">
+            <div class="customer-avatar">
+                {{ customer.name|slice:":1" }}
+            </div>
+            <div class="customer-title">
+                <h1>{{ customer.name }}</h1>
+                <p>Customer ID: #{{ customer.pk|stringformat:"05d" }}</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'orders:create' %}?customer_id={{ customer.pk }}" class="btn btn-primary">
+                <i class="fas fa-cash-register me-2"></i>New Order (POS)
+            </a>
+            <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <a href="#overview" class="tab-link active" data-tab="overview">
+                <i class="fas fa-user-circle icon"></i> Overview
+            </a>
+            <a href="#orders" class="tab-link" data-tab="orders">
+                <i class="fas fa-receipt icon"></i> Order History
+            </a>
+            <a href="#loyalty" class="tab-link" data-tab="loyalty">
+                <i class="fas fa-star icon"></i> Loyalty & Referrals
+            </a>
+            <a href="#notes" class="tab-link" data-tab="notes">
+                <i class="fas fa-sticky-note icon"></i> Notes
+            </a>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="overview" class="tab-content active">
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-item">
+                <div class="icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-content">
+                    <div class="value">{{ CURRENCY_SYMBOL }}{{ customer.total_spent|default:0|floatformat:2|intcomma }}</div>
+                    <div class="label">Total Spent</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="icon"><i class="fas fa-box-open"></i></div>
+                <div class="stat-content">
+                    <div class="value">{{ customer.total_orders|default:0 }}</div>
+                    <div class="label">Total Orders</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="icon"><i class="fas fa-gift"></i></div>
+                <div class="stat-content">
+                    <div class="value">{{ loyalty_points|default:0 }}</div>
+                    <div class="label">Loyalty Points</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-content">
+                    <div class="value">{{ customer.created_at|date:"M d, Y" }}</div>
+                    <div class="label">Member Since</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-layout-2">
+            <!-- Contact Information -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-address-book icon"></i>
+                    <h3>Contact Information</h3>
+                </div>
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Phone</span>
+                        <span class="value"><a href="tel:{{ customer.phone }}">{{ customer.phone }}</a></span>
+                    </li>
+                    <li>
+                        <span class="label">Email</span>
+                        <span class="value">
+                            {% if customer.email %}
+                                <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="label">Address</span>
+                        <span class="value">
+                            {% if customer.address %}
+                                {{ customer.address|linebreaksbr }}
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Additional Details -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle icon"></i>
+                    <h3>Additional Details</h3>
+                </div>
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Account Status</span>
+                        <span class="value">
+                            {% if customer.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="label">Date of Birth</span>
+                        <span class="value">
+                            {% if customer.date_of_birth %}
+                                {{ customer.date_of_birth|date:"F d, Y" }}
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="label">Last Visit</span>
+                        <span class="value">
+                            {% if customer.last_visit %}
+                                {{ customer.last_visit|naturaltime }}
+                            {% else %}
+                                <span class="text-muted">No visits yet</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                     <li>
+                        <span class="label">Created By</span>
+                        <span class="value">{{ customer.created_by.username }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="orders" class="tab-content">
+        <div class="info-card">
+            <div class="card-header">
+                <i class="fas fa-receipt icon"></i>
+                <h3>Order History</h3>
+            </div>
+            {% with orders=customer.orders.all %}
+            {% if orders %}
+                <table class="order-history-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><a href="{% url 'orders:detail' order.pk %}">#{{ order.pk|stringformat:"05d" }}</a></td>
+                            <td>{{ order.created_at|date:"M d, Y, P" }}</td>
+                            <td>{{ CURRENCY_SYMBOL }}{{ order.total_amount|floatformat:2 }}</td>
+                            <td><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                            <td>
+                                <a href="{% url 'orders:detail' order.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center text-muted mt-4">This customer has no orders yet.</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <div id="loyalty" class="tab-content">
+        <p>Loyalty and referral information will be displayed here.</p>
+        <!-- TODO: Add loyalty account details, transaction history, and referral info -->
+    </div>
+
+    <div id="notes" class="tab-content">
+        <p>Customer notes will be displayed here.</p>
+        <!-- TODO: Add customer notes list and a form to add new notes -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Function to switch tabs
+    function switchTab(tabId) {
+        tabs.forEach(tab => {
+            if (tab.dataset.tab === tabId) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        tabContents.forEach(content => {
+            if (content.id === tabId) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+        
+        // Update URL hash without jumping
+        if(history.pushState) {
+            history.pushState(null, null, '#' + tabId);
+        } else {
+            location.hash = '#' + tabId;
+        }
+    }
+
+    // Event listeners for tab clicks
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabId = this.dataset.tab;
+            switchTab(tabId);
+        });
+    });
+
+    // Check for hash in URL on page load
+    const initialTab = window.location.hash.substring(1);
+    if (initialTab) {
+        switchTab(initialTab);
+    } else {
+        // Default to overview if no hash
+        switchTab('overview');
+    }
+});
+</script>
+{% endblock %}

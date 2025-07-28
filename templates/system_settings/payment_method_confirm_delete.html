@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Payment Method - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-trash text-danger"></i> Delete Payment Method</h2>
+    <a href="{% url 'system_settings:payment_methods' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Payment Methods
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                {% if not can_delete %}
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-ban"></i> Cannot Delete</h6>
+                        <p class="mb-0">{{ constraint_message }}</p>
+                    </div>
+                    
+                    {% if related_summary %}
+                        <div class="mt-3">
+                            <h6>Related Records:</h6>
+                            <ul class="list-unstyled">
+                                {% for item in related_summary %}
+                                    <li>
+                                        <i class="fas fa-link text-warning"></i>
+                                        <strong>{{ item.count }}</strong> {{ item.model_name_plural|title }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <p><strong>To delete this payment method:</strong></p>
+                        <ol>
+                            <li>First, update or delete all orders that use this payment method</li>
+                            <li>Or, change the orders to use a different payment method</li>
+                            <li>Then return here to delete this payment method</li>
+                        </ol>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                        <p class="mb-0">This action cannot be undone. Make sure you really want to delete this payment method.</p>
+                    </div>
+                {% endif %}
+                
+                <p>Are you sure you want to delete the following payment method?</p>
+                
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6>
+                            {% if payment_method.icon %}
+                                <i class="{{ payment_method.icon }}"></i>
+                            {% endif %}
+                            {{ payment_method.name }}
+                        </h6>
+                        <p class="mb-1"><strong>Code:</strong> <code>{{ payment_method.code }}</code></p>
+                        {% if payment_method.description %}
+                            <p class="mb-1"><strong>Description:</strong> {{ payment_method.description }}</p>
+                        {% endif %}
+                        <p class="mb-1">
+                            <strong>Status:</strong> 
+                            {% if payment_method.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                        <p class="mb-0">
+                            <strong>Requires Verification:</strong> 
+                            {% if payment_method.requires_verification %}
+                                <span class="badge bg-warning">Yes</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if can_delete %}
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'system_settings:payment_methods' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Payment Method
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="mt-4">
+                        <a href="{% url 'system_settings:payment_methods' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Payment Methods
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle"></i> Impact Assessment</h6>
+            </div>
+            <div class="card-body">
+                <p><small class="text-muted">Before deleting this payment method, consider:</small></p>
+                <ul class="small">
+                    <li>Existing orders using this payment method will retain the payment method information</li>
+                    <li>New orders will no longer be able to use this payment method</li>
+                    <li>Reports and analytics will still show historical data for this payment method</li>
+                    <li>You can reactivate a similar payment method by creating a new one with the same details</li>
+                </ul>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <strong>Alternative:</strong> Instead of deleting, you could mark this payment method as inactive to preserve historical data while preventing new usage.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

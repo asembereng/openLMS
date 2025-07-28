@@ -1,0 +1,953 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_format %}
+
+{% block title %}Order #{{ order.order_number }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .order-detail-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .order-main {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .order-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .order-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .order-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-in-progress {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-ready {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-completed {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    
+    /* Status Workflow Visualization */
+    .status-workflow-container {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .status-workflow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .status-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        width: 70px;
+    }
+    
+    .status-step.active .step-icon {
+        background: #6366f1;
+        color: white;
+        border-color: #6366f1;
+    }
+    
+    .status-step:not(.active) .step-icon {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border-color: #cbd5e1;
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        border: 2px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+        text-align: center;
+    }
+    
+    .status-step.active .step-label {
+        color: #0f172a;
+        font-weight: 600;
+    }
+    
+    .status-step-connector {
+        flex-grow: 1;
+        height: 2px;
+        background: #e2e8f0;
+        margin: 0 0.5rem;
+    }
+    
+    .status-description {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+
+    .order-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .meta-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .meta-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .meta-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .order-body {
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .order-items {
+        margin-bottom: 2rem;
+    }
+
+    .item-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .item-table th {
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .item-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .item-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .item-table tr:hover {
+        background: #f9fafb;
+    }
+
+    .service-name {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .service-category {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1e293b;
+        padding-top: 1rem;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .customer-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+    }
+
+    .customer-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .customer-info {
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .btn-primary {
+        background: #6366f1;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5855eb;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: #059669;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #047857;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-warning {
+        background: #d97706;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: #b45309;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f8fafc;
+        color: #1e293b;
+        text-decoration: none;
+        border-color: #cbd5e1;
+    }
+
+    .back-link {
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+        color: #5855eb;
+        text-decoration: none;
+    }
+
+    .status-history {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .history-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-icon {
+        width: 32px;
+        height: 32px;
+        background: #6366f1;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+    }
+
+    .history-content {
+        flex: 1;
+    }
+
+    .history-status {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .history-time {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    @media (max-width: 1024px) {
+        .order-detail-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-sidebar {
+            order: -1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .order-meta {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-header {
+            padding: 1.5rem;
+        }
+        
+        .order-body {
+            padding: 1.5rem;
+        }
+        
+        .item-table {
+            font-size: 0.875rem;
+        }
+        
+        .item-table th,
+        .item-table td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .status-workflow {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .status-step {
+            margin: 0.5rem 0.25rem;
+        }
+        
+        .status-step-connector {
+            display: none;
+        }
+        
+        .step-label {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'orders:list' %}" class="back-link">
+    <i class="fas fa-arrow-left"></i> Back to Orders
+</a>
+
+<div class="page-header">
+    <h1><i class="fas fa-file-invoice"></i> Order Details</h1>
+    <p>Complete order information and management</p>
+</div>
+
+<div class="order-detail-container">
+    <div class="order-main">
+        <div class="order-header">
+            <div class="order-number">#{{ order.order_number }}</div>
+            <span class="order-status status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+            </span>
+            
+            <!-- Status Workflow Visualization -->
+            <div class="status-workflow-container">
+                <div class="status-workflow">
+                    <div class="status-step {% if order.status == 'pending' or order.status == 'in_progress' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="step-label">Pending</div>
+                    </div>
+                    <div class="status-step-connector"></div>
+                    <div class="status-step {% if order.status == 'in_progress' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-cog fa-spin"></i></div>
+                        <div class="step-label">Processing</div>
+                    </div>
+                    <div class="status-step-connector"></div>
+                    <div class="status-step {% if order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-box"></i></div>
+                        <div class="step-label">Ready</div>
+                    </div>
+                    <div class="status-step-connector"></div>
+                    <div class="status-step {% if order.status == 'completed' %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="step-label">Completed</div>
+                    </div>
+                </div>
+                <div class="status-description">
+                    {% if order.status == 'pending' %}
+                    Waiting to start processing
+                    {% elif order.status == 'in_progress' %}
+                    Your order is being processed
+                    {% elif order.status == 'ready' %}
+                    Your order is ready for pickup/delivery
+                    {% elif order.status == 'completed' %}
+                    Your order has been completed
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="order-meta">
+                <div class="meta-item">
+                    <div class="meta-label">Created</div>
+                    <div class="meta-value">{{ order.created_at|date:"M d, Y H:i" }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Due Date</div>
+                    <div class="meta-value">{{ order.due_date|date:"M d, Y"|default:"Not set" }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Created By</div>
+                    <div class="meta-value">{{ order.created_by.get_full_name|default:order.created_by.username }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="order-body">
+            <div class="order-items">
+                <h3 class="section-title">Order Items</h3>
+                <table class="item-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Category</th>
+                            <th>Pieces</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for line in order.lines.all %}
+                        <tr>
+                            <td>
+                                <div class="service-name">{{ line.service.name }}</div>
+                            </td>
+                            <td>
+                                <div class="service-category">{{ line.service.category.name }}</div>
+                            </td>
+                            <td>{{ line.pieces }}</td>
+                            <td>{{ line.unit_price|currency_html }}</td>
+                            <td>{{ line.total_price|currency_html }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No items in this order</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if order.notes %}
+            <div class="order-notes">
+                <h3 class="section-title">Notes</h3>
+                <div class="status-history">
+                    <p>{{ order.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if order.status_history.exists %}
+            <div class="order-history">
+                <h3 class="section-title">Status History</h3>
+                <div class="status-history">
+                    {% for history in order.status_history.all %}
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-status">{{ history.get_status_display }}</div>
+                            <div class="history-time">{{ history.created_at|date:"M d, Y H:i" }} by {{ history.changed_by.get_full_name|default:history.changed_by.username }}</div>
+                            {% if history.notes %}
+                            <div class="history-notes">{{ history.notes }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="order-sidebar">
+        <!-- Customer Information -->
+        <div class="customer-card">
+            <h3>Customer</h3>
+            <div class="customer-name">{{ order.customer.name }}</div>
+            <div class="customer-info"><i class="fas fa-phone"></i> {{ order.customer.phone }}</div>
+            {% if order.customer.email %}
+            <div class="customer-info"><i class="fas fa-envelope"></i> {{ order.customer.email }}</div>
+            {% endif %}
+            {% if order.customer.address %}
+            <div class="customer-info"><i class="fas fa-map-marker-alt"></i> {{ order.customer.address }}</div>
+            {% endif %}
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="summary-card">
+            <h3>Order Summary</h3>
+            <div class="summary-row">
+                <span>Total Items:</span>
+                <span>{{ order.lines.count }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Total Pieces:</span>
+                <span>{{ order.total_pieces }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Subtotal:</span>
+                <span>{{ order.subtotal|currency }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Discount:</span>
+                <span>- {{ order.discount_amount|currency }}</span>
+            </div>
+            {% if order.loyalty_discount_amount > 0 %}
+            <div class="summary-row loyalty-discount">
+                <span>Loyalty Discount ({{ order.redeemed_points }} points)</span>
+                <span>- {{ order.loyalty_discount_amount|currency }}</span>
+            </div>
+            {% endif %}
+            <div class="summary-row total-row">
+                <strong>Total</strong>
+                <strong>{{ order.total_amount|currency }}</strong>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="actions-card">
+            <h3>Actions</h3>
+            
+            {% if order.status == 'pending' %}
+            <form action="{% url 'orders:update_status' order.pk %}" method="post" class="d-inline status-form">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="in_progress">
+                <button type="button" class="btn btn-primary status-button" data-status="in_progress" data-status-display="In Progress">
+                    <i class="fas fa-play"></i> Start Processing
+                </button>
+                <button type="submit" class="d-none">Submit</button>
+            </form>
+            {% elif order.status == 'in_progress' %}
+            <form action="{% url 'orders:update_status' order.pk %}" method="post" class="d-inline status-form">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="ready">
+                <button type="button" class="btn btn-warning status-button" data-status="ready" data-status-display="Ready">
+                    <i class="fas fa-check"></i> Mark Ready
+                </button>
+                <button type="submit" class="d-none">Submit</button>
+            </form>
+            {% elif order.status == 'ready' %}
+            <form action="{% url 'orders:update_status' order.pk %}" method="post" class="d-inline status-form">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="completed">
+                <button type="button" class="btn btn-success status-button" data-status="completed" data-status-display="Completed">
+                    <i class="fas fa-check-circle"></i> Complete Order
+                </button>
+                <button type="submit" class="d-none">Submit</button>
+            </form>
+            {% endif %}
+            
+            <a href="{% url 'orders:receipt' order.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-receipt"></i> View Receipt
+            </a>
+            
+            <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> All Orders
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusUpdateModalLabel">Update Order Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusUpdateForm" action="{% url 'orders:update_status' order.pk %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" id="modalStatus">
+                    
+                    <div class="mb-3">
+                        <label for="modalNotes" class="form-label">Optional Notes</label>
+                        <textarea class="form-control" id="modalNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Order detail page functionality
+// Helper function to get cookie value (for CSRF token)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status update forms
+    const statusForms = document.querySelectorAll('.actions-card form');
+    
+    statusForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Show loading state
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            // Get the new status
+            const statusInput = this.querySelector('input[name="status"]');
+            const newStatus = statusInput.value;
+            
+            // Let the form submit and the page refresh with updated status
+        });
+    });
+    
+    // Handle status update buttons
+    const statusButtons = document.querySelectorAll('.status-button');
+    const statusUpdateForm = document.getElementById('statusUpdateForm');
+    const modalStatus = document.getElementById('modalStatus');
+    const modalNotes = document.getElementById('modalNotes');
+    
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            const statusDisplay = this.getAttribute('data-status-display');
+            
+            // Clear previous values
+            modalNotes.value = '';
+            
+            // Set the status in the modal form
+            modalStatus.value = status;
+            
+            // Update modal title to reflect the action
+            const modalTitle = document.getElementById('statusUpdateModalLabel');
+            if (modalTitle) {
+                modalTitle.textContent = `Update Status to ${statusDisplay}`;
+            }
+            
+            // Open the modal
+            const modal = new bootstrap.Modal(document.getElementById('statusUpdateModal'));
+            modal.show();
+        });
+    });
+    
+    // Handle modal form submission
+    statusUpdateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        const button = this.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        // Get and validate form data
+        const formData = new FormData(this);
+        
+        // Log form data for debugging
+        console.log('Form action:', this.action);
+        for (let [key, value] of formData.entries()) {
+            console.log(`Form data: ${key}:`, value);
+        }
+        
+        // Make sure status is present
+        const statusValue = formData.get('status');
+        if (!statusValue) {
+            console.error('Status value is missing!');
+            alert('Error: Status value is required');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            return;
+        }
+        
+        // Get CSRF token from cookie if available
+        const csrftoken = getCookie('csrftoken') || formData.get('csrfmiddlewaretoken');
+        console.log('Using CSRF Token:', csrftoken); // Debug log
+        
+        // Create a direct form submission as a fallback
+        if (statusValue === 'ready' || statusValue === 'completed') {
+            console.log('Using direct form submission as a fallback');
+            // Find the appropriate form in the page and submit it directly
+            const forms = document.querySelectorAll('.status-form');
+            for (const form of forms) {
+                const hiddenInput = form.querySelector('input[name="status"]');
+                if (hiddenInput && hiddenInput.value === statusValue) {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    // Submit the form directly
+                    form.submit();
+                    return;
+                }
+            }
+        }
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Response body:', text);
+                    try {
+                        // Try to parse error response as JSON
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.error || `Request failed with status: ${response.status}`);
+                    } catch (e) {
+                        // If parsing fails, use the raw text
+                        throw new Error(`Network error (${response.status}): ${text || response.statusText}`);
+                    }
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data); // Debug log
+            
+            if (data && data.success) {
+                // Create a success notification
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 z-index-1000';
+                notification.style.zIndex = 2000; // Ensure it's visible
+                notification.innerHTML = `
+                    <strong>Success!</strong> ${data.message ? 'Order status updated to ' + data.message : 'Status updated successfully'}.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.body.appendChild(notification);
+                
+                // Automatically refresh the page to show updated status and workflow
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            } else {
+                // Handle errors (e.g., validation, server errors)
+                console.error('Error response:', data);
+                const errorMessage = data && data.error ? data.error : 'Unknown error occurred';
+                alert('Error updating status: ' + errorMessage);
+                
+                // Reset the button
+                const button = this.querySelector('button[type="submit"]');
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the status: ' + error.message);
+            
+            // Reset the button
+            const button = this.querySelector('button[type="submit"]');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        });
+    });
+    
+    console.log('Order detail page loaded with status update handlers');
+    console.log('Current order status:', '{{ order.status }}');
+    console.log('Available status transitions configured');
+});
+</script>
+{% endblock %}

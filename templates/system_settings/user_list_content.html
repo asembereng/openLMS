@@ -1,0 +1,436 @@
+{% load static %}
+
+<!-- User Management Content Only (for inclusion) -->
+<div class="user-management-page">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-users"></i> User Management
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'system_settings:user_create' %}" class="btn-main">
+                <i class="fas fa-user-plus"></i> Add New User
+            </a>
+        </div>
+    </div>
+
+    <div class="controls-section">
+        <div class="search-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="userSearch" placeholder="Search users..." class="form-control">
+            </div>
+            <div class="filter-controls">
+                <select id="roleFilter" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin Users</option>
+                    <option value="normal_user">Normal Users</option>
+                </select>
+                <select id="statusFilter" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="users-container">
+        {% if users %}
+            <div class="users-grid" id="usersGrid">
+                {% for user in users %}
+                <div class="user-card" data-role="{% if user.is_superuser %}admin{% else %}normal_user{% endif %}" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
+                    <div class="user-card-header">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-status">
+                            {% if user.is_active %}
+                                <span class="status-badge active">Active</span>
+                            {% else %}
+                                <span class="status-badge inactive">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="user-info">
+                        <h3 class="user-name">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="user-username">@{{ user.username }}</p>
+                        {% if user.email %}
+                            <p class="user-email">
+                                <i class="fas fa-envelope"></i> {{ user.email }}
+                            </p>
+                        {% endif %}
+                        <p class="user-role">
+                            <i class="fas fa-{% if user.is_superuser %}crown{% else %}user{% endif %}"></i>
+                            {% if user.is_superuser %}Administrator{% else %}Normal User{% endif %}
+                        </p>
+                        <p class="user-joined">
+                            <i class="fas fa-calendar"></i> Joined {{ user.date_joined|date:"M d, Y" }}
+                        </p>
+                        {% if user.last_login %}
+                            <p class="user-last-login">
+                                <i class="fas fa-clock"></i> Last login: {{ user.last_login|date:"M d, Y g:i A" }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="user-actions">
+                        <a href="{% url 'system_settings:user_detail' user.pk %}" class="btn-action btn-view">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="{% url 'system_settings:user_edit' user.pk %}" class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        {% if user != request.user %}
+                            <button class="btn-action btn-toggle" onclick="toggleUserStatus({{ user.pk }}, '{% if user.is_active %}deactivate{% else %}activate{% endif %}')">
+                                <i class="fas fa-{% if user.is_active %}user-slash{% else %}user-check{% endif %}"></i>
+                                {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    {% endif %}
+                    
+                    <span class="current-page">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>No Users Found</h3>
+                <p>Get started by creating your first user account.</p>
+                <a href="{% url 'system_settings:user_create' %}" class="btn-main">
+                    <i class="fas fa-user-plus"></i> Create First User
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CSS Styles for User Management -->
+<style>
+    .user-management-page {
+        padding: 2rem 0;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        color: var(--dark-color);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    .controls-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        position: relative;
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-gray);
+    }
+    
+    .search-box input {
+        padding-left: 3rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .filter-controls {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .filter-controls select {
+        min-width: 150px;
+    }
+    
+    .users-grid {
+        display: grid;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .user-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .user-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .user-avatar {
+        width: 3rem;
+        height: 3rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .user-info h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark-color);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .user-info p {
+        margin: 0.25rem 0;
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .user-username {
+        color: var(--primary-color) !important;
+        font-weight: 500;
+    }
+    
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-view {
+        background: #f3f4f6;
+        color: var(--dark-color);
+    }
+    
+    .btn-view:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-edit {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    
+    .btn-edit:hover {
+        background: #bfdbfe;
+    }
+    
+    .btn-toggle {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .btn-toggle:hover {
+        background: #fde68a;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-gray);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #d1d5db;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .pagination a {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        color: var(--text-gray);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination a:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .current-page {
+        padding: 0.5rem 1rem;
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .search-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-box {
+            min-width: auto;
+        }
+        
+        .user-actions {
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- JavaScript for User Management -->
+<script>
+function toggleUserStatus(userId, action) {
+    if (!confirm(`Are you sure you want to ${action} this user?`)) {
+        return;
+    }
+    
+    fetch(`/admin-settings/users/${userId}/toggle-${action}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update user status'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+// Search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearch');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const userCards = document.querySelectorAll('.user-card');
+    
+    function filterUsers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedRole = roleFilter.value;
+        const selectedStatus = statusFilter.value;
+        
+        userCards.forEach(card => {
+            const userName = card.querySelector('.user-name').textContent.toLowerCase();
+            const userUsername = card.querySelector('.user-username').textContent.toLowerCase();
+            const userRole = card.dataset.role;
+            const userStatus = card.dataset.status;
+            
+            const matchesSearch = userName.includes(searchTerm) || userUsername.includes(searchTerm);
+            const matchesRole = !selectedRole || userRole === selectedRole;
+            const matchesStatus = !selectedStatus || userStatus === selectedStatus;
+            
+            if (matchesSearch && matchesRole && matchesStatus) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterUsers);
+    roleFilter.addEventListener('change', filterUsers);
+    statusFilter.addEventListener('change', filterUsers);
+});
+</script>

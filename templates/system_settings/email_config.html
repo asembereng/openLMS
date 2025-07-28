@@ -1,0 +1,710 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Email Configuration - A&F Laundry Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-envelope-open-text text-primary me-2"></i>
+            Email Configuration
+        </h1>
+        <p class="text-muted mb-0">Configure SMTP settings and email delivery</p>
+    </div>
+    <div>
+        <a href="{% url 'system_settings:admin_home' %}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Admin
+        </a>
+        <button type="button" class="btn btn-success" id="testEmailBtn">
+            <i class="fas fa-paper-plane me-1"></i>
+            Test Email
+        </button>
+    </div>
+</div>
+
+<!-- Configuration Notice -->
+<div class="alert alert-warning mb-4" id="configNotice">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Configuration Required:</strong> Please configure your actual SMTP settings below and save the configuration before testing. 
+    The current values appear to be placeholders and will not work for sending emails.
+    <br><small class="mt-1 d-block">
+        <strong>For Gmail:</strong> Use your email address as username and an <a href="https://support.google.com/accounts/answer/185833" target="_blank">App Password</a> (not your regular password).
+    </small>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- SMTP Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-server me-2"></i>
+                        SMTP Server Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ form.smtp_host.id_for_label }}" class="form-label">SMTP Host</label>
+                            {{ form.smtp_host|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.smtp_port.id_for_label }}" class="form-label">SMTP Port</label>
+                            {{ form.smtp_port|add_class:"form-control" }}
+                            <div class="form-text">587 (TLS), 465 (SSL), 25 (Plain)</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.smtp_username.id_for_label }}" class="form-label">Username</label>
+                            {{ form.smtp_username|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.smtp_password.id_for_label }}" class="form-label">Password</label>
+                            {{ form.smtp_password|add_class:"form-control"|attr:"type:password" }}
+                            <div class="form-text">Use app-specific password for Gmail</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.use_tls|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.use_tls.id_for_label }}">
+                                    Use TLS Encryption
+                                </label>
+                                <div class="form-text">Recommended for most SMTP servers</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.use_ssl|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.use_ssl.id_for_label }}">
+                                    Use SSL Encryption
+                                </label>
+                                <div class="form-text">Alternative to TLS (mutually exclusive)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>
+                        Email Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.from_email.id_for_label }}" class="form-label">From Email</label>
+                            {{ form.from_email|add_class:"form-control"|attr:"type:email" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.from_name.id_for_label }}" class="form-label">From Name</label>
+                            {{ form.from_name|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.reply_to_email.id_for_label }}" class="form-label">Reply-To Email</label>
+                            {{ form.reply_to_email|add_class:"form-control"|attr:"type:email" }}
+                            <div class="form-text">Optional - leave blank to use From Email</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.test_email.id_for_label }}" class="form-label">Test Email Address</label>
+                            {{ form.test_email|add_class:"form-control"|attr:"type:email" }}
+                            <div class="form-text">Email address for testing configuration</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Notice -->
+            <div class="alert alert-info mt-3 mb-3" id="saveNotice">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Before Saving:</strong> Please test your email configuration using the "Test Email" button above to ensure it works correctly.
+                The save button will be enabled only after a successful test.
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-secondary" id="saveConfigBtn" disabled title="Please test email configuration first">
+                    <i class="fas fa-save me-1"></i>
+                    Save Configuration
+                    <small class="d-block" style="font-size: 0.7em;">Test required</small>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Test Status -->
+        {% if object.last_test_sent %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-vial me-2"></i>
+                    Last Test Result
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Last Test:</strong><br>
+                    <span class="text-muted">{{ object.last_test_sent|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Status:</strong><br>
+                    {% if object.last_test_success %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>
+                            Success
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times me-1"></i>
+                            Failed
+                        </span>
+                    {% endif %}
+                </div>
+                {% if object.last_test_error %}
+                <div class="mb-0">
+                    <strong>Error:</strong><br>
+                    <div class="alert alert-danger p-2 small">
+                        {{ object.last_test_error }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Common SMTP Settings -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Common SMTP Settings
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Gmail:</strong><br>
+                    <small class="text-muted">
+                        Host: smtp.gmail.com<br>
+                        Port: 587 (TLS)<br>
+                        Use app password
+                    </small>
+                </div>
+                <div class="mb-3">
+                    <strong>Outlook/Hotmail:</strong><br>
+                    <small class="text-muted">
+                        Host: smtp.live.com<br>
+                        Port: 587 (TLS)
+                    </small>
+                </div>
+                <div class="mb-0">
+                    <strong>Yahoo:</strong><br>
+                    <small class="text-muted">
+                        Host: smtp.mail.yahoo.com<br>
+                        Port: 587 (TLS)
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Setup Guide
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong class="text-primary">📧 Gmail Setup (Recommended):</strong>
+                    <ol class="small text-muted mt-1 mb-2">
+                        <li>Use your Gmail address as the SMTP username</li>
+                        <li>Enable 2-Factor Authentication on your Google account</li>
+                        <li>Generate an <a href="https://support.google.com/accounts/answer/185833" target="_blank">App Password</a></li>
+                        <li>Use the 16-character app password (not your regular password)</li>
+                        <li>Set SMTP host to <code>smtp.gmail.com</code> and port to <code>587</code></li>
+                        <li>Enable TLS encryption</li>
+                    </ol>
+                </div>
+                
+                <div class="mb-3">
+                    <strong class="text-info">🔧 Testing Process:</strong>
+                    <ol class="small text-muted mt-1 mb-2">
+                        <li>Configure all SMTP settings with real values</li>
+                        <li>Set a valid test email address where you can receive emails</li>
+                        <li>Save the configuration</li>
+                        <li>Click "Test Email" to validate the settings</li>
+                        <li>Check your test email inbox for the test message</li>
+                    </ol>
+                </div>
+                
+                <div class="alert alert-warning p-2 small mb-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>Important:</strong> The test will fail if you use placeholder values or incorrect credentials. 
+                    Make sure to use real, working email account settings.
+                </div>
+                
+                <p class="small text-muted mb-2">
+                    <strong>🔒 Security:</strong> Your SMTP password is encrypted and stored securely. For Gmail, always use app-specific passwords.
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>❓ Troubleshooting:</strong> If the test fails, check the error message in the "Last Test Result" section above for specific guidance.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function testEmailConfig() {
+    console.log('testEmailConfig function called');
+    
+    // Show immediate feedback
+    showAlert('info', 'Starting email configuration test...');
+    
+    const button = document.getElementById('testEmailBtn');
+    if (!button) {
+        console.error('Test button not found!');
+        showAlert('danger', 'Error: Test button not found');
+        return;
+    }
+    
+    const originalText = button.innerHTML;
+    
+    console.log('Starting email test validation...');
+    
+    // Get form values for validation
+    const testEmailField = document.querySelector('input[name="test_email"]');
+    const smtpUsername = document.querySelector('input[name="smtp_username"]');
+    const smtpPassword = document.querySelector('input[name="smtp_password"]');
+    const fromEmail = document.querySelector('input[name="from_email"]');
+    const smtpHost = document.querySelector('input[name="smtp_host"]');
+    
+    console.log('Form fields found:', {
+        testEmail: !!testEmailField,
+        smtpUsername: !!smtpUsername,
+        smtpPassword: !!smtpPassword,
+        fromEmail: !!fromEmail,
+        smtpHost: !!smtpHost
+    });
+    
+    console.log('Current form values:', {
+        testEmail: testEmailField ? testEmailField.value : 'null',
+        smtpUsername: smtpUsername ? smtpUsername.value : 'null',
+        smtpPassword: smtpPassword ? '***' : 'null',
+        fromEmail: fromEmail ? fromEmail.value : 'null',
+        smtpHost: smtpHost ? smtpHost.value : 'null'
+    });
+    
+    // Comprehensive validation before testing
+    if (!testEmailField || !testEmailField.value.trim()) {
+        showAlert('warning', 'Please configure a test email address first.');
+        return;
+    }
+    
+    if (!smtpUsername || !smtpUsername.value.trim()) {
+        showAlert('warning', 'Please configure the SMTP username.');
+        return;
+    }
+    
+    if (!smtpPassword || !smtpPassword.value.trim()) {
+        showAlert('warning', 'Please configure the SMTP password.');
+        return;
+    }
+    
+    if (!fromEmail || !fromEmail.value.trim()) {
+        showAlert('warning', 'Please configure the from email address.');
+        return;
+    }
+    
+    // Check for obvious placeholder values - but be less strict
+    const knownPlaceholders = [
+        'your-email@gmail.com',
+        'noreply@aflaundry.com', 
+        'admin@aflaundry.com',
+        'example.com',
+        'your-app-password',
+        'your-password-here'
+    ];
+    
+    // Only warn if it's an exact match with known placeholders
+    if (knownPlaceholders.includes(smtpUsername.value)) {
+        showAlert('warning', `Please update the SMTP username. Current value appears to be a placeholder: ${smtpUsername.value}`);
+        return;
+    }
+    
+    if (knownPlaceholders.includes(fromEmail.value)) {
+        showAlert('warning', `Please update the from email address. Current value appears to be a placeholder: ${fromEmail.value}`);
+        return;
+    }
+    
+    if (knownPlaceholders.includes(testEmailField.value)) {
+        showAlert('warning', `Please update the test email address. Current value appears to be a placeholder: ${testEmailField.value}`);
+        return;
+    }
+    
+    // Check for any email containing obvious placeholder domains
+    const placeholderDomains = ['example.com', 'test.com', 'placeholder.com'];
+    const emailFields = [smtpUsername, fromEmail, testEmailField];
+    
+    for (const field of emailFields) {
+        for (const domain of placeholderDomains) {
+            if (field.value.includes(domain)) {
+                showAlert('warning', `Please use a real email address instead of: ${field.value}`);
+                return;
+            }
+        }
+    }
+    
+    // Warn if password is too short (but allow real passwords)
+    if (smtpPassword.value.length < 6) {
+        showAlert('warning', 'SMTP password seems too short. Please ensure you have configured a valid password.');
+        return;
+    }
+    
+    // Final confirmation for testing
+    if (!confirm('Are you sure you want to test the email configuration? This will attempt to send a real email to the test address.')) {
+        return;
+    }
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testing...';
+    
+    // Collect all form values
+    const formData = new FormData();
+    formData.append('smtp_host', document.querySelector('input[name="smtp_host"]').value);
+    formData.append('smtp_port', document.querySelector('input[name="smtp_port"]').value);
+    formData.append('smtp_username', document.querySelector('input[name="smtp_username"]').value);
+    formData.append('smtp_password', document.querySelector('input[name="smtp_password"]').value);
+    formData.append('from_email', document.querySelector('input[name="from_email"]').value);
+    formData.append('from_name', document.querySelector('input[name="from_name"]').value);
+    formData.append('test_email', document.querySelector('input[name="test_email"]').value);
+    
+    // Also include reply_to if it exists
+    const replyToField = document.querySelector('input[name="reply_to_email"]');
+    if (replyToField && replyToField.value.trim()) {
+        formData.append('reply_to_email', replyToField.value);
+    }
+    
+    // Get checkbox values
+    const useTls = document.querySelector('input[name="use_tls"]');
+    const useSsl = document.querySelector('input[name="use_ssl"]');
+    formData.append('use_tls', useTls && useTls.checked ? 'on' : 'off');
+    formData.append('use_ssl', useSsl && useSsl.checked ? 'on' : 'off');
+    
+    console.log('Sending form data to server:', Object.fromEntries(formData));
+    
+    fetch('{% url "system_settings:test_email" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            // Enable save button on successful test
+            enableSaveButton();
+            // Reset the form changed flag since we've successfully tested with current values
+            formFieldsChanged = false;
+            // Update test status UI directly instead of reloading
+            updateTestStatusUI(true, data.message, data.timestamp);
+        } else {
+            showAlert('danger', data.error);
+            // Disable save button on failed test
+            disableSaveButton();
+            // Update test status UI with error
+            updateTestStatusUI(false, data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Email test error:', error);
+        showAlert('danger', 'Error testing email configuration: ' + error.message);
+        // Disable save button on error
+        disableSaveButton();
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+// Function to enable save button
+function enableSaveButton() {
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const saveNotice = document.getElementById('saveNotice');
+    
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('btn-secondary');
+        saveBtn.classList.add('btn-primary');
+        saveBtn.title = 'Configuration tested successfully - ready to save';
+        saveBtn.innerHTML = `
+            <i class="fas fa-save me-1"></i>
+            Save Configuration
+            <small class="d-block" style="font-size: 0.7em;">✓ Tested</small>
+        `;
+    }
+    
+    if (saveNotice) {
+        saveNotice.classList.remove('alert-info');
+        saveNotice.classList.add('alert-success');
+        saveNotice.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Ready to Save:</strong> Email configuration has been tested successfully. You can now save the configuration.
+        `;
+    }
+}
+
+// Function to disable save button
+function disableSaveButton() {
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const saveNotice = document.getElementById('saveNotice');
+    
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.classList.remove('btn-primary');
+        saveBtn.classList.add('btn-secondary');
+        saveBtn.title = 'Please test email configuration first';
+        saveBtn.innerHTML = `
+            <i class="fas fa-save me-1"></i>
+            Save Configuration
+            <small class="d-block" style="font-size: 0.7em;">Test required</small>
+        `;
+    }
+    
+    if (saveNotice) {
+        saveNotice.classList.remove('alert-success');
+        saveNotice.classList.add('alert-info');
+        saveNotice.innerHTML = `
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Before Saving:</strong> Please test your email configuration using the "Test Email" button above to ensure it works correctly.
+            The save button will be enabled only after a successful test.
+        `;
+    }
+}
+
+// Check if configuration looks like placeholders and show/hide warning
+function checkConfiguration() {
+    const smtpUsername = document.querySelector('input[name="smtp_username"]');
+    const fromEmail = document.querySelector('input[name="from_email"]');
+    const testEmail = document.querySelector('input[name="test_email"]');
+    const configNotice = document.getElementById('configNotice');
+    
+    if (!smtpUsername || !fromEmail || !testEmail || !configNotice) return;
+    
+    const hasPlaceholders = 
+        smtpUsername.value === 'your-email@gmail.com' ||
+        fromEmail.value === 'noreply@aflaundry.com' ||
+        testEmail.value === 'admin@aflaundry.com' ||
+        smtpUsername.value.includes('example.com') ||
+        fromEmail.value.includes('example.com') ||
+        testEmail.value.includes('example.com');
+    
+    if (hasPlaceholders) {
+        configNotice.classList.remove('d-none');
+        configNotice.classList.add('alert-warning');
+        configNotice.classList.remove('alert-success');
+        disableSaveButton();
+    } else {
+        configNotice.classList.remove('alert-warning');
+        configNotice.classList.add('alert-success');
+        configNotice.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Configuration looks good!</strong> You can now test your email settings.
+        `;
+        // Still need to test before enabling save
+        disableSaveButton();
+    }
+}
+
+// Check if we have a successful test result on page load
+function checkTestStatus() {
+    const lastTestSuccess = {{ object.last_test_success|yesno:"true,false,false" }};
+    const hasValidConfig = !document.querySelector('input[name="smtp_username"]').value.includes('your-email@gmail.com');
+    
+    if (lastTestSuccess && hasValidConfig) {
+        enableSaveButton();
+    } else {
+        disableSaveButton();
+    }
+}
+
+// Disable save button when form fields change (requires re-testing)
+function onConfigChange() {
+    formFieldsChanged = true;
+    disableSaveButton();
+    checkConfiguration();
+}
+
+// Global variable to track form changes
+let formFieldsChanged = false;
+
+// Run configuration check when page loads and when fields change
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up email configuration page...');
+    
+    checkConfiguration();
+    checkTestStatus();
+    
+    // Add click event listener to test button
+    const testBtn = document.getElementById('testEmailBtn');
+    if (testBtn) {
+        console.log('Test button found, adding event listener...');
+        testBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Test button clicked!');
+            testEmailConfig();
+        });
+    } else {
+        console.error('Test button not found!');
+    }
+    
+    // Add event listeners to form fields
+    const fieldsToWatch = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'from_email', 'from_name', 'reply_to_email', 'test_email', 'use_tls', 'use_ssl'];
+    fieldsToWatch.forEach(fieldName => {
+        const field = document.querySelector(`input[name="${fieldName}"], select[name="${fieldName}"]`);
+        if (field) {
+            field.addEventListener('input', onConfigChange);
+            field.addEventListener('change', onConfigChange);
+        }
+    });
+    
+    // Reset the form fields changed flag
+    formFieldsChanged = false;
+    
+    // Prevent form submission if save button is disabled
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const saveBtn = document.getElementById('saveConfigBtn');
+            if (saveBtn && saveBtn.disabled) {
+                e.preventDefault();
+                
+                // Provide more specific message based on whether fields have changed
+                if (formFieldsChanged) {
+                    showAlert('warning', 'You have made changes to the configuration. Please test the configuration again before saving.');
+                } else {
+                    showAlert('warning', 'Please test the email configuration successfully before saving.');
+                }
+                return false;
+            }
+        });
+    }
+});
+
+// Function to update the test status UI without page reload
+function updateTestStatusUI(success, message, timestamp) {
+    const testStatusContainer = document.querySelector('.col-lg-4');
+    if (!testStatusContainer) return;
+    
+    // Check if test status card exists, create if not
+    let testStatusCard = testStatusContainer.querySelector('.card:first-child');
+    let isNewCard = false;
+    
+    if (!testStatusCard || !testStatusCard.querySelector('.card-header h6')?.textContent.includes('Test Result')) {
+        // Create a new card if it doesn't exist
+        isNewCard = true;
+        testStatusCard = document.createElement('div');
+        testStatusCard.className = 'card mb-4';
+        testStatusCard.innerHTML = `
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-vial me-2"></i>
+                    Last Test Result
+                </h6>
+            </div>
+            <div class="card-body">
+            </div>
+        `;
+    }
+    
+    // Get or create the card body
+    const cardBody = testStatusCard.querySelector('.card-body');
+    
+    // Use server timestamp if provided, otherwise use local time
+    const displayTime = timestamp || new Date().toLocaleString();
+    
+    // Update the card body contents
+    cardBody.innerHTML = `
+        <div class="mb-3">
+            <strong>Last Test:</strong><br>
+            <span class="text-muted">${displayTime}</span>
+        </div>
+        <div class="mb-3">
+            <strong>Status:</strong><br>
+            ${success ? 
+                `<span class="badge bg-success">
+                    <i class="fas fa-check me-1"></i>
+                    Success
+                </span>` : 
+                `<span class="badge bg-danger">
+                    <i class="fas fa-times me-1"></i>
+                    Failed
+                </span>`
+            }
+        </div>
+        ${!success && message ? 
+            `<div class="mb-0">
+                <strong>Error:</strong><br>
+                <div class="alert alert-danger p-2 small">
+                    ${message}
+                </div>
+            </div>` : ''
+        }
+    `;
+    
+    // Insert the card at the top of the container if it's new
+    if (isNewCard) {
+        if (testStatusContainer.firstChild) {
+            testStatusContainer.insertBefore(testStatusCard, testStatusContainer.firstChild);
+        } else {
+            testStatusContainer.appendChild(testStatusCard);
+        }
+    }
+}
+
+function showAlert(type, message) {
+    // Remove any existing alerts
+    const existingAlerts = document.querySelectorAll('.dynamic-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show dynamic-alert`;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.maxWidth = '400px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

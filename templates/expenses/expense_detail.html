@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load expense_tags %}
+{% load currency_format %}
+
+{% block title %}{{ expense.description }} - Expenses - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .expense-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .expense-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    .expense-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+    }
+    .status-badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    .amount-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .info-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .receipt-image {
+        max-width: 300px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="expense-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-receipt me-2"></i>
+                    {{ expense.description }}
+                </h2>
+                <p class="mb-0 opacity-75">
+                    <span class="category-color" style="background-color: {{ expense.category.color }}; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+                    {{ expense.category.name }} • {{ expense.expense_date|date:"F d, Y" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="amount-display text-white">
+                    {{ expense.amount|currency_html }}
+                </div>
+                <div class="mt-2">
+                    {% if expense.is_approved %}
+                        <span class="status-badge bg-success text-white">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Approved
+                        </span>
+                    {% else %}
+                        <span class="status-badge bg-warning text-dark">
+                            <i class="fas fa-clock me-1"></i>
+                            Pending Approval
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Details -->
+        <div class="col-lg-8">
+            <div class="expense-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Expense Details
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <div class="info-label">Description</div>
+                        <div>{{ expense.description }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Category</div>
+                        <div>
+                            <span class="category-color" style="background-color: {{ expense.category.color }}; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+                            {{ expense.category.name }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Amount</div>
+                        <div class="text-success fw-bold fs-4">{{ expense.amount|currency_html }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Expense Date</div>
+                        <div>{{ expense.expense_date|date:"F d, Y" }}</div>
+                    </div>
+                    
+                    {% if expense.notes %}
+                    <div class="info-item">
+                        <div class="info-label">Notes</div>
+                        <div>{{ expense.notes|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Receipt Image -->
+            {% if expense.receipt_image %}
+            <div class="expense-card">
+                <div class="card-header">
+                    <i class="fas fa-image me-2"></i>
+                    Receipt
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ expense.receipt_image.url }}" alt="Receipt" class="receipt-image img-fluid">
+                    <div class="mt-2">
+                        <a href="{{ expense.receipt_image.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            View Full Size
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Attachments -->
+            {% if expense.attachments.exists %}
+            <div class="expense-card">
+                <div class="card-header">
+                    <i class="fas fa-paperclip me-2"></i>
+                    Attachments
+                </div>
+                <div class="card-body">
+                    {% for attachment in expense.attachments.all %}
+                    <div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+                        <div>
+                            <i class="fas fa-file me-2"></i>
+                            {% if attachment.description %}
+                                {{ attachment.description }}
+                            {% else %}
+                                Attachment {{ forloop.counter }}
+                            {% endif %}
+                            <small class="text-muted d-block">
+                                Uploaded {{ attachment.uploaded_at|date:"M d, Y" }} by {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                            </small>
+                        </div>
+                        <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="expense-card">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-2"></i>
+                    Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if expense|can_edit_expense:request.user %}
+                        <a href="{% url 'expenses:edit' expense.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Expense
+                        </a>
+                        {% endif %}
+                        
+                        {% if not expense.is_approved and request.user|is_admin_user %}
+                        <button class="btn btn-success" onclick="approveExpense({{ expense.pk }})">
+                            <i class="fas fa-check me-2"></i>
+                            Approve Expense
+                        </button>
+                        {% endif %}
+                        
+                        {% if expense|can_delete_expense:request.user %}
+                        <a href="{% url 'expenses:delete' expense.pk %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-2"></i>
+                            Delete Expense
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Information -->
+            <div class="expense-card">
+                <div class="card-header">
+                    <i class="fas fa-history me-2"></i>
+                    Audit Information
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <div class="info-label">Created By</div>
+                        <div>{{ expense.created_by.get_full_name|default:expense.created_by.username }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Created At</div>
+                        <div>{{ expense.created_at|date:"M d, Y g:i A" }}</div>
+                    </div>
+                    
+                    {% if expense.updated_at != expense.created_at %}
+                    <div class="info-item">
+                        <div class="info-label">Last Updated</div>
+                        <div>{{ expense.updated_at|date:"M d, Y g:i A" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if expense.is_approved %}
+                    <div class="info-item">
+                        <div class="info-label">Approved By</div>
+                        <div>{{ expense.approved_by.get_full_name|default:expense.approved_by.username }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Approved At</div>
+                        <div>{{ expense.approved_at|date:"M d, Y g:i A" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveExpense(expenseId) {
+    if (!confirm('Are you sure you want to approve this expense?')) return;
+    
+    fetch(`/expenses/ajax/${expenseId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to approve expense');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to approve expense');
+    });
+}
+</script>
+{% endblock %}

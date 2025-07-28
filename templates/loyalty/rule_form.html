@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Loyalty Rule - {{ block.super }}{% endblock %}
+
+{% block extra_js %}
+<!-- Load SortableJS from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{% static 'loyalty/rule_editor.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Loyalty Rule</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <!-- Drag-and-drop rule editor -->
+                <div class="mb-4">
+                    <label class="form-label">Rule Steps (Drag to Reorder):</label>
+                    <ul id="rule-list" class="list-group mb-3">
+                        {% for rule in rules %}
+                        <li class="list-group-item rule-card d-flex align-items-center" data-rule-id="{{ rule.id }}">
+                            <span class="drag-handle me-2" style="cursor:move;"><i class="fas fa-grip-vertical"></i></span>
+                            <span class="me-2"><i class="fas {{ rule.ui.icon }}" style="color:{{ rule.ui.color }};"></i></span>
+                            <strong>{{ rule.name }}</strong> <span class="text-muted ms-2">({{ rule.ui.section }})</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <input type="hidden" name="rule_order" id="rule-order-input" value="">
+                </div>
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Save Rule</button>
+                <a href="{% url 'loyalty:rule_list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

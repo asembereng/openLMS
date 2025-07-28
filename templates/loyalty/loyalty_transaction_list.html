@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Loyalty Transactions</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Account</th>
+            <th>Order</th>
+            <th>Points Change</th>
+            <th>Description</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.account.customer.name }}</td>
+            <td>{{ transaction.order }}</td>
+            <td>{{ transaction.points_change }}</td>
+            <td>{{ transaction.description }}</td>
+            <td>{{ transaction.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,766 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit User{% else %}Create New User{% endif %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Form Design System */
+    :root {
+        --form-spacing: 1.5rem;
+        --field-height: 3rem;
+        --field-radius: 0.75rem;
+        --focus-color: var(--primary-color);
+        --error-color: var(--danger-color);
+        --success-color: #10b981;
+    }
+
+    /* Page Layout */
+    .form-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Header */
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .form-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        font-size: 1.1rem;
+        color: var(--text-gray);
+        margin-bottom: 0;
+    }
+
+    /* Main Form Card */
+    .form-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .form-card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .form-card-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    .form-card-body {
+        padding: 2.5rem;
+    }
+
+    /* Form Grid System */
+    .form-grid {
+        display: grid;
+        gap: var(--form-spacing);
+    }
+
+    .form-grid.two-column {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .form-grid.three-column {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-field.full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Modern Input Fields */
+    .field-group {
+        position: relative;
+        margin-bottom: var(--form-spacing);
+    }
+
+    .field-label {
+        display: block;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .field-label.required::after {
+        content: ' *';
+        color: var(--error-color);
+    }
+
+    .field-input {
+        width: 100%;
+        height: var(--field-height);
+        padding: 0 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--field-radius);
+        font-size: 1rem;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        outline: none;
+    }
+
+    .field-input:focus {
+        border-color: var(--focus-color);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .field-input.error {
+        border-color: var(--error-color);
+        background: #fef2f2;
+    }
+
+    .field-input.success {
+        border-color: var(--success-color);
+        background: #f0fdf4;
+    }
+
+    /* Textarea */
+    .field-textarea {
+        min-height: 120px;
+        padding: 1rem;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    /* Select Fields */
+    .field-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        appearance: none;
+    }
+
+    /* Input Groups with Icons */
+    .field-with-icon {
+        position: relative;
+    }
+
+    .field-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-gray);
+        font-size: 1rem;
+        z-index: 2;
+    }
+
+    .field-with-icon .field-input {
+        padding-left: 3rem;
+    }
+
+    /* Field Help Text */
+    .field-help {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .field-help::before {
+        content: 'ℹ️';
+        font-size: 0.8rem;
+    }
+
+    /* Field Error */
+    .field-error {
+        color: var(--error-color);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .field-error::before {
+        content: '⚠️';
+        font-size: 0.8rem;
+    }
+
+    /* Form Sections */
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    /* Radio and Checkbox Options */
+    .field-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+
+    .option-card {
+        border: 2px solid #e5e7eb;
+        border-radius: var(--field-radius);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        background: white;
+    }
+
+    .option-card:hover {
+        border-color: var(--focus-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .option-card.selected {
+        border-color: var(--focus-color);
+        background: rgba(var(--primary-rgb), 0.05);
+    }
+
+    .option-card input[type="radio"],
+    .option-card input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .option-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .option-label {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .option-description {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        margin-top: 0.5rem;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3rem;
+    }
+
+    .btn-main {
+        padding: 0.75rem 2rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        font-weight: 600;
+        border-radius: var(--field-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+    }
+
+    .btn-main:active {
+        transform: translateY(0);
+    }
+
+    .btn-secondary {
+        padding: 0.75rem 2rem;
+        background: #f9fafb;
+        color: var(--dark-color);
+        font-weight: 600;
+        border-radius: var(--field-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #e5e7eb;
+        font-size: 1rem;
+    }
+
+    .btn-secondary:hover {
+        background: #f3f4f6;
+    }
+
+    .btn-loading {
+        position: relative;
+        color: transparent;
+    }
+
+    .btn-loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-top-color: white;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    /* Form Tips */
+    .form-tips {
+        background: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border-radius: 0.5rem;
+    }
+
+    .form-tips-title {
+        font-weight: 600;
+        color: #0369a1;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-tips-title::before {
+        content: '💡';
+    }
+
+    .form-tips-content {
+        font-size: 0.9rem;
+        color: #0c4a6e;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .form-grid.two-column,
+        .form-grid.three-column {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-main, .btn-secondary {
+            width: 100%;
+        }
+        
+        .form-card-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-header">
+        <h1>
+            {% if form.instance.pk %}Edit User{% else %}Create New User{% endif %}
+        </h1>
+        <p>
+            {% if form.instance.pk %}
+                Update user information and permissions
+            {% else %}
+                Add a new user to your laundry management system
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2>
+                {% if form.instance.pk %}User Details{% else %}User Information{% endif %}
+            </h2>
+        </div>
+
+        <form method="post" id="userForm" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-card-body">
+                <!-- User Account Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        Account Information
+                    </h3>
+                    
+                    <div class="form-grid two-column">
+                        <!-- Username -->
+                        <div class="field-group">
+                            <label for="id_username" class="field-label required">Username</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-user field-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="id_username" 
+                                    name="username" 
+                                    class="field-input"
+                                    value="{{ form.username.value|default_if_none:'' }}"
+                                    placeholder="Enter username"
+                                    required
+                                    autocomplete="username"
+                                >
+                            </div>
+                            {% if form.username.errors %}
+                                <div class="field-error">{{ form.username.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Unique login name (lowercase, letters, digits and @/./+/-/_)</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Email Address -->
+                        <div class="field-group">
+                            <label for="id_email" class="field-label">Email Address</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-envelope field-icon"></i>
+                                <input 
+                                    type="email" 
+                                    id="id_email" 
+                                    name="email" 
+                                    class="field-input"
+                                    value="{{ form.email.value|default_if_none:'' }}"
+                                    placeholder="user@example.com"
+                                    autocomplete="email"
+                                >
+                            </div>
+                            {% if form.email.errors %}
+                                <div class="field-error">{{ form.email.errors.0 }}</div>
+                            {% else %}
+                                <div class="field-help">Used for password reset and notifications</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-address-card"></i>
+                        </div>
+                        Personal Information
+                    </h3>
+                    
+                    <div class="form-grid two-column">
+                        <!-- First Name -->
+                        <div class="field-group">
+                            <label for="id_first_name" class="field-label">First Name</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-id-badge field-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="id_first_name" 
+                                    name="first_name" 
+                                    class="field-input"
+                                    value="{{ form.first_name.value|default_if_none:'' }}"
+                                    placeholder="Enter first name"
+                                    autocomplete="given-name"
+                                >
+                            </div>
+                            {% if form.first_name.errors %}
+                                <div class="field-error">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="field-group">
+                            <label for="id_last_name" class="field-label">Last Name</label>
+                            <div class="field-with-icon">
+                                <i class="fas fa-id-badge field-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="id_last_name" 
+                                    name="last_name" 
+                                    class="field-input"
+                                    value="{{ form.last_name.value|default_if_none:'' }}"
+                                    placeholder="Enter last name"
+                                    autocomplete="family-name"
+                                >
+                            </div>
+                            {% if form.last_name.errors %}
+                                <div class="field-error">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Role and Status Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        Role & Status
+                    </h3>
+                    
+                    <!-- User Role Options -->
+                    <div class="field-group">
+                        <label class="field-label required">User Role</label>
+                        <div class="field-options">
+                            <label class="option-card" for="role_admin">
+                                <input type="radio" id="role_admin" name="role" value="admin">
+                                <div class="option-icon">👑</div>
+                                <div class="option-label">Admin</div>
+                                <div class="option-description">Full system access, manage users, configure settings</div>
+                            </label>
+                            <label class="option-card" for="role_normal_user">
+                                <input type="radio" id="role_normal_user" name="role" value="normal_user" checked>
+                                <div class="option-icon">👤</div>
+                                <div class="option-label">Normal User</div>
+                                <div class="option-description">Manage orders, customers, limited reports</div>
+                            </label>
+                        </div>
+                        {% if form.role.errors %}
+                            <div class="field-error">{{ form.role.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- User Status (Active/Inactive) -->
+                    <div class="field-group">
+                        <label for="id_is_active" class="field-label">Account Status</label>
+                        <div class="field-with-icon">
+                            <i class="fas fa-toggle-on field-icon"></i>
+                            <select id="id_is_active" name="is_active" class="field-input field-select">
+                                <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                                <option value="False" {% if form.is_active.value == False %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                        {% if form.is_active.errors %}
+                            <div class="field-error">{{ form.is_active.errors.0 }}</div>
+                        {% else %}
+                            <div class="field-help">Inactive users cannot log in to the system</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Form tips section -->
+                <div class="form-tips">
+                    <div class="form-tips-title">Important Information</div>
+                    <div class="form-tips-content">
+                        <ul>
+                            <li>A secure random password will be generated automatically</li>
+                            <li>If an email address is provided, login details will be sent to the user</li>
+                            <li>Users will be prompted to change their password on first login</li>
+                            <li>Admin users have full system access, including user management and configuration</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Form actions -->
+                <div class="form-actions">
+                    <a href="{% url 'accounts:user_list' %}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn-main" id="submitBtn">
+                        <i class="fas fa-user-plus"></i> {% if form.instance.pk %}Update User{% else %}Create User{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('userForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const inputs = form.querySelectorAll('.field-input');
+        
+        // Role selection cards
+        const roleCards = document.querySelectorAll('.option-card');
+        const roleInputs = document.querySelectorAll('input[name="role"]');
+        
+        // Initialize role selection
+        roleInputs.forEach(input => {
+            if (input.checked) {
+                input.closest('.option-card').classList.add('selected');
+            }
+            
+            input.addEventListener('change', function() {
+                roleCards.forEach(card => card.classList.remove('selected'));
+                if (this.checked) {
+                    this.closest('.option-card').classList.add('selected');
+                }
+            });
+        });
+        
+        // Real-time validation and styling
+        inputs.forEach(input => {
+            // Add event listeners for real-time feedback
+            input.addEventListener('input', function() {
+                validateField(this);
+                formatInput(this);
+            });
+
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+
+            // Initial validation for pre-filled fields
+            if (input.value.trim() !== '') {
+                validateField(input);
+            }
+        });
+
+        // Field validation function
+        function validateField(field) {
+            const fieldGroup = field.closest('.field-group');
+            const errorDiv = fieldGroup.querySelector('.field-error');
+            const helpDiv = fieldGroup.querySelector('.field-help');
+            
+            // Remove existing validation classes
+            field.classList.remove('error', 'success');
+            
+            // Basic validation
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                field.classList.add('error');
+                return false;
+            }
+            
+            // Username validation
+            if (field.name === 'username' && field.value.trim()) {
+                const usernameRegex = /^[\w.@+-]+$/;
+                if (!usernameRegex.test(field.value)) {
+                    field.classList.add('error');
+                    return false;
+                }
+            }
+            
+            // Email validation
+            if (field.type === 'email' && field.value.trim()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value)) {
+                    field.classList.add('error');
+                    return false;
+                }
+            }
+            
+            // If we get here, field is valid
+            if (field.value.trim()) {
+                field.classList.add('success');
+            }
+            
+            return true;
+        }
+
+        // Input formatting
+        function formatInput(field) {
+            switch(field.name) {
+                case 'username':
+                    // Convert to lowercase
+                    field.value = field.value.toLowerCase();
+                    break;
+                    
+                case 'email':
+                    // Convert to lowercase
+                    field.value = field.value.toLowerCase();
+                    break;
+            }
+        }
+
+        // Form submission with enhanced UX
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all fields
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                // Scroll to first error
+                const firstError = form.querySelector('.field-input.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                return;
+            }
+
+            // Show loading state
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating User...';
+
+            // Submit form
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}

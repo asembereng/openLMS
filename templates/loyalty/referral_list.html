@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Referrals</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Referrer</th>
+            <th>Referee</th>
+            <th>Reward Granted</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for referral in referrals %}
+        <tr>
+            <td>{{ referral.code }}</td>
+            <td>{{ referral.referrer.name }}</td>
+            <td>{{ referral.referee.name }}</td>
+            <td>{{ referral.reward_granted }}</td>
+            <td>{{ referral.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

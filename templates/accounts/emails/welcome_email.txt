@@ -1,0 +1,42 @@
+Welcome to {{ company_name }}!
+
+Hello {{ user.get_full_name|default:user.username }},
+
+Your account has been successfully created in our laundry management system{% if created_by %} by {{ created_by.get_full_name|default:created_by.username }}{% endif %}.
+
+LOGIN CREDENTIALS:
+==================
+Username: {{ user.username }}
+Email: {{ user.email }}
+{% if password %}Password: {{ password }}{% endif %}
+
+LOGIN URL: {{ login_url }}
+
+GETTING STARTED INSTRUCTIONS:
+==============================
+1. Login: Visit the login page using your credentials above
+2. Change Password: For security, please change your password after your first login
+3. Complete Profile: Update your profile information including phone number and address
+4. Explore: Familiarize yourself with the system features and navigation
+5. Get Help: Contact support if you need assistance with any features
+
+{% if password %}
+SECURITY NOTE:
+==============
+Please keep your login credentials secure and do not share them with others. 
+We recommend changing your password after your first login.
+{% endif %}
+
+CONTACT INFORMATION:
+====================
+If you have any questions or need assistance, please contact us:
+{% if company_phone %}Phone: {{ company_phone }}{% endif %}
+{% if support_email %}Email: {{ support_email }}{% endif %}
+{% if company_address %}Address: {{ company_address }}{% endif %}
+
+Thank you for joining {{ company_name }}!
+
+---
+This is an automated message. Please do not reply to this email.
+{{ company_name }}
+{% if company_email %}{{ company_email }}{% endif %}

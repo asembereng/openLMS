@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Page Not Found - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    .error-content {
+        text-align: center;
+        color: white;
+        padding: 3rem;
+    }
+    .error-code {
+        font-size: 8rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 1rem;
+    }
+    .error-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .error-description {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .error-actions {
+        margin-top: 2rem;
+    }
+    .error-actions .btn {
+        margin: 0 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+    }
+    .error-actions .btn:hover {
+        transform: translateY(-2px);
+    }
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+        animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="error-code">404</div>
+            <h1 class="error-title">Page Not Found</h1>
+            <p class="error-description">
+                Oops! The page you're looking for doesn't exist. It might have been moved, 
+                deleted, or you entered the wrong URL. Don't worry, let's get you back on track!
+            </p>
+            
+            <div class="error-actions">
+                <a href="javascript:history.back()" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </a>
+                <a href="/dashboard/" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+            
+            <div class="mt-4">
+                <small class="text-light opacity-75">
+                    <i class="fas fa-lightbulb"></i> 
+                    Tip: Check the URL for typos or use the navigation menu
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                    <h6>Customers</h6>
+                    <p class="text-muted small">Manage customer information</p>
+                    <a href="/customers/" class="btn btn-sm btn-outline-primary">View</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-2x text-success mb-3"></i>
+                    <h6>Orders</h6>
+                    <p class="text-muted small">Process new orders</p>
+                    <a href="/orders/pos/" class="btn btn-sm btn-outline-success">POS</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-2x text-info mb-3"></i>
+                    <h6>Reports</h6>
+                    <p class="text-muted small">View business analytics</p>
+                    <a href="/reports/" class="btn btn-sm btn-outline-info">Reports</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-cog fa-2x text-warning mb-3"></i>
+                    <h6>Settings</h6>
+                    <p class="text-muted small">System configuration</p>
+                    {% if user.is_superuser %}
+                        <a href="/admin-settings/" class="btn btn-sm btn-outline-warning">Settings</a>
+                    {% else %}
+                        <span class="text-muted small">Admin only</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

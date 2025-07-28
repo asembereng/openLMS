@@ -1,0 +1,1289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Order - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Base Mobile Workflow Styles */
+    .mobile-workflow-container {
+        display: none; /* Hidden by default, shown on mobile */
+        min-height: calc(100vh - 120px);
+        background: #f8fafc;
+    }
+
+    .workflow-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .workflow-progress {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+
+    .progress-step::after {
+        content: '';
+        position: absolute;
+        top: 15px;
+        right: -50%;
+        width: 100%;
+        height: 2px;
+        background: rgba(255,255,255,0.3);
+        z-index: 1;
+    }
+
+    .progress-step:last-child::after {
+        display: none;
+    }
+
+    .step-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        position: relative;
+        z-index: 2;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .progress-step.active .step-circle {
+        background: white;
+        color: #4facfe;
+    }
+
+    .progress-step.completed .step-circle {
+        background: #10b981;
+        color: white;
+    }
+
+    .progress-step.completed::after {
+        background: #10b981;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    .progress-step.active .step-label {
+        opacity: 1;
+        font-weight: 600;
+    }
+
+    .workflow-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .workflow-content {
+        padding: 1.5rem;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .step-content {
+        display: none;
+        flex: 1;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .step-content.active {
+        display: flex;
+        flex-direction: column;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Step 1: Customer Selection */
+    .customer-search-section {
+        margin-bottom: 2rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #4facfe;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+    }
+
+    .customer-list {
+        margin-top: 1rem;
+    }
+
+    .customer-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .customer-item:hover, .customer-item.selected {
+        border-color: #4facfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .customer-name {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .customer-phone {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .create-customer-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 12px;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .create-customer-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* New Customer Form */
+    .new-customer-form {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: none;
+    }
+
+    .new-customer-form.active {
+        display: block;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #4facfe;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+    }
+
+    /* Step 2: Service Selection */
+    .service-categories {
+        margin-bottom: 1.5rem;
+    }
+
+    .category-filter {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .category-btn {
+        background: white;
+        border: 2px solid #e5e7eb;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .category-btn.active {
+        background: #4facfe;
+        border-color: #4facfe;
+        color: white;
+    }
+
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .service-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .service-card:hover, .service-card.selected {
+        border-color: #4facfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .service-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #4facfe;
+    }
+
+    .service-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #1f2937;
+    }
+
+    .service-price {
+        color: #10b981;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Step 3: Order Items */
+    .selected-service-info {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .quantity-input-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .quantity-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid #4facfe;
+        background: white;
+        color: #4facfe;
+        font-size: 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .quantity-btn:hover {
+        background: #4facfe;
+        color: white;
+    }
+
+    .quantity-display {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .price-calculation {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .calc-row:last-child {
+        border-top: 2px solid #e5e7eb;
+        padding-top: 0.5rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1f2937;
+    }
+
+    /* Step 4: Receipt Sharing */
+    .order-summary {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .success-icon {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .success-icon i {
+        font-size: 3rem;
+        color: #10b981;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1f2937;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .receipt-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .receipt-btn {
+        padding: 1rem;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-whatsapp {
+        background: #25d366;
+        color: white;
+    }
+
+    .btn-whatsapp:hover {
+        background: #1ea653;
+        transform: translateY(-2px);
+    }
+
+    .btn-print {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-print:hover {
+        background: #4b5563;
+        transform: translateY(-2px);
+    }
+
+    .btn-pdf {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-pdf:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+    }
+
+    /* Navigation Buttons */
+    .workflow-navigation {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .nav-btn {
+        flex: 1;
+        padding: 1rem;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-back:hover {
+        background: #e5e7eb;
+    }
+
+    .btn-next {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .btn-next:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+    }
+
+    .btn-next:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Desktop View - Show regular POS */
+    @media (min-width: 769px) {
+        .mobile-workflow-container {
+            display: none !important;
+        }
+        
+        .desktop-pos-container {
+            display: block;
+        }
+    }
+
+    /* Mobile View - Show workflow */
+    @media (max-width: 768px) {
+        .mobile-workflow-container {
+            display: block !important;
+        }
+        
+        .desktop-pos-container {
+            display: none !important;
+        }
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Error States */
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .success-message {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Mobile Workflow Container -->
+<div class="mobile-workflow-container" id="mobileWorkflow">
+    <!-- Workflow Header -->
+    <div class="workflow-header">
+        <div class="workflow-progress">
+            <div class="progress-step active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Customer</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Service</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Items</div>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Receipt</div>
+            </div>
+        </div>
+        <h1 class="workflow-title" id="workflowTitle">Select Customer</h1>
+    </div>
+
+    <!-- Workflow Content -->
+    <div class="workflow-content">
+        <!-- Step 1: Customer Selection -->
+        <div class="step-content active" id="step1">
+            <div class="customer-search-section">
+                <input type="text" 
+                       class="search-input" 
+                       id="customerSearchInput"
+                       placeholder="Search customer by name or phone..."
+                       autocomplete="off">
+            </div>
+
+            <div class="customer-list" id="customerList">
+                <!-- Customer items will be loaded here -->
+            </div>
+
+            <button class="create-customer-btn" id="createCustomerBtn">
+                <i class="fas fa-plus"></i>
+                Create New Customer
+            </button>
+
+            <!-- New Customer Form -->
+            <div class="new-customer-form" id="newCustomerForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" id="newCustomerName" placeholder="Enter customer name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number *</label>
+                    <input type="tel" class="form-input" id="newCustomerPhone" placeholder="Enter phone number">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email (Optional)</label>
+                    <input type="email" class="form-input" id="newCustomerEmail" placeholder="Enter email address">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address (Optional)</label>
+                    <input type="text" class="form-input" id="newCustomerAddress" placeholder="Enter address">
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Service Selection -->
+        <div class="step-content" id="step2">
+            <div class="service-categories">
+                <div class="category-filter" id="categoryFilter">
+                    <button class="category-btn active" data-category="">All Services</button>
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+
+            <div class="services-grid" id="servicesGrid">
+                <!-- Services will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Step 3: Order Items -->
+        <div class="step-content" id="step3">
+            <div class="selected-service-info" id="selectedServiceInfo">
+                <!-- Selected service info will be displayed here -->
+            </div>
+
+            <div class="quantity-input-section">
+                <h3>Number of Items</h3>
+                <div class="quantity-controls">
+                    <button class="quantity-btn" id="decreaseBtn">-</button>
+                    <div class="quantity-display" id="quantityDisplay">1</div>
+                    <button class="quantity-btn" id="increaseBtn">+</button>
+                </div>
+
+                <div class="price-calculation" id="priceCalculation">
+                    <!-- Price calculation will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Receipt Sharing -->
+        <div class="step-content" id="step4">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+                <h2>Order Created Successfully!</h2>
+            </div>
+
+            <div class="order-summary" id="orderSummary">
+                <!-- Order summary will be displayed here -->
+            </div>
+
+            <div class="receipt-actions">
+                <button class="receipt-btn btn-whatsapp" id="shareWhatsAppBtn">
+                    <i class="fab fa-whatsapp"></i>
+                    Share via WhatsApp
+                </button>
+                <button class="receipt-btn btn-print" id="printReceiptBtn">
+                    <i class="fas fa-print"></i>
+                    Print Receipt
+                </button>
+                <button class="receipt-btn btn-pdf" id="downloadPdfBtn">
+                    <i class="fas fa-file-pdf"></i>
+                    Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="workflow-navigation">
+        <button class="nav-btn btn-back" id="backBtn" onclick="previousStep()">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <button class="nav-btn btn-next" id="nextBtn" onclick="nextStep()" disabled>
+            Next <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Desktop POS Container (existing POS content) -->
+<div class="desktop-pos-container">
+    {% include 'orders/pos_desktop.html' %}
+</div>
+
+<!-- Hidden form for order submission -->
+<form id="orderForm" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="customer_id" id="orderCustomerId">
+    <input type="hidden" name="service_id" id="orderServiceId">
+    <input type="hidden" name="quantity" id="orderQuantity">
+    <input type="hidden" name="total_amount" id="orderTotalAmount">
+</form>
+
+<!-- CSRF Token for AJAX requests -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mobile Workflow JavaScript
+class MobileWorkflow {
+    constructor() {
+        this.currentStep = 1;
+        this.maxSteps = 4;
+        this.selectedCustomer = null;
+        this.selectedService = null;
+        this.quantity = 1;
+        this.totalAmount = 0;
+        this.createdOrderId = null;
+
+        this.init();
+    }
+
+    init() {
+        this.loadCustomers();
+        this.loadServices();
+        this.bindEvents();
+        this.updateNavigationButtons();
+    }
+
+    bindEvents() {
+        // Customer search
+        document.getElementById('customerSearchInput').addEventListener('input', (e) => {
+            this.searchCustomers(e.target.value);
+        });
+
+        // Create new customer
+        document.getElementById('createCustomerBtn').addEventListener('click', () => {
+            this.toggleNewCustomerForm();
+        });
+
+        // New customer form inputs
+        ['newCustomerName', 'newCustomerPhone'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                this.validateNewCustomerForm();
+            });
+        });
+
+        // Quantity controls
+        document.getElementById('decreaseBtn').addEventListener('click', () => {
+            this.changeQuantity(-1);
+        });
+
+        document.getElementById('increaseBtn').addEventListener('click', () => {
+            this.changeQuantity(1);
+        });
+
+        // Receipt actions
+        document.getElementById('shareWhatsAppBtn').addEventListener('click', () => {
+            this.shareViaWhatsApp();
+        });
+
+        document.getElementById('printReceiptBtn').addEventListener('click', () => {
+            this.printReceipt();
+        });
+
+        document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+            this.downloadPdf();
+        });
+    }
+
+    async loadCustomers() {
+        try {
+            const response = await fetch('/customers/api/?limit=50');
+            const data = await response.json();
+            this.renderCustomers(data.results || data);
+        } catch (error) {
+            console.error('Error loading customers:', error);
+            this.showError('Failed to load customers. Please try again.');
+        }
+    }
+
+    renderCustomers(customers) {
+        const container = document.getElementById('customerList');
+        container.innerHTML = '';
+
+        customers.forEach(customer => {
+            const customerItem = document.createElement('div');
+            customerItem.className = 'customer-item';
+            customerItem.dataset.customerId = customer.id;
+            customerItem.innerHTML = `
+                <div class="customer-name">${customer.name}</div>
+                <div class="customer-phone">${customer.phone}</div>
+            `;
+
+            customerItem.addEventListener('click', () => {
+                this.selectCustomer(customer);
+            });
+
+            container.appendChild(customerItem);
+        });
+    }
+
+    searchCustomers(query) {
+        if (query.length < 2) {
+            this.loadCustomers();
+            return;
+        }
+
+        fetch(`/customers/api/?search=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                this.renderCustomers(data.results || data);
+            })
+            .catch(error => {
+                console.error('Error searching customers:', error);
+            });
+    }
+
+    selectCustomer(customer) {
+        this.selectedCustomer = customer;
+        
+        // Update UI
+        document.querySelectorAll('.customer-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        document.querySelector(`[data-customer-id="${customer.id}"]`).classList.add('selected');
+        
+        this.updateNavigationButtons();
+        this.hideNewCustomerForm();
+    }
+
+    toggleNewCustomerForm() {
+        const form = document.getElementById('newCustomerForm');
+        const btn = document.getElementById('createCustomerBtn');
+        
+        if (form.classList.contains('active')) {
+            this.hideNewCustomerForm();
+        } else {
+            form.classList.add('active');
+            btn.textContent = 'Cancel';
+            btn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+            document.getElementById('newCustomerName').focus();
+        }
+    }
+
+    hideNewCustomerForm() {
+        const form = document.getElementById('newCustomerForm');
+        const btn = document.getElementById('createCustomerBtn');
+        
+        form.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-plus"></i> Create New Customer';
+        
+        // Clear form
+        ['newCustomerName', 'newCustomerPhone', 'newCustomerEmail', 'newCustomerAddress'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+    }
+
+    validateNewCustomerForm() {
+        const name = document.getElementById('newCustomerName').value.trim();
+        const phone = document.getElementById('newCustomerPhone').value.trim();
+        
+        if (name && phone) {
+            this.selectedCustomer = {
+                id: 'new',
+                name: name,
+                phone: phone,
+                email: document.getElementById('newCustomerEmail').value.trim(),
+                address: document.getElementById('newCustomerAddress').value.trim()
+            };
+            this.updateNavigationButtons();
+        } else {
+            this.selectedCustomer = null;
+            this.updateNavigationButtons();
+        }
+    }
+
+    async loadServices() {
+        try {
+            const response = await fetch('/services/api/');
+            const data = await response.json();
+            this.renderServices(data.results || data);
+            this.renderCategories(data.results || data);
+        } catch (error) {
+            console.error('Error loading services:', error);
+            this.showError('Failed to load services. Please try again.');
+        }
+    }
+
+    renderCategories(services) {
+        const categories = [...new Set(services.map(s => s.category?.name).filter(Boolean))];
+        const container = document.getElementById('categoryFilter');
+        
+        categories.forEach(category => {
+            const btn = document.createElement('button');
+            btn.className = 'category-btn';
+            btn.dataset.category = category;
+            btn.textContent = category;
+            
+            btn.addEventListener('click', () => {
+                this.filterServicesByCategory(category);
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+            
+            container.appendChild(btn);
+        });
+    }
+
+    renderServices(services) {
+        const container = document.getElementById('servicesGrid');
+        container.innerHTML = '';
+
+        services.forEach(service => {
+            const serviceCard = document.createElement('div');
+            serviceCard.className = 'service-card';
+            serviceCard.dataset.serviceId = service.id;
+            serviceCard.innerHTML = `
+                <div class="service-icon">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <div class="service-name">${service.name}</div>
+                <div class="service-price">D${service.price_per_dozen}/dozen</div>
+            `;
+
+            serviceCard.addEventListener('click', () => {
+                this.selectService(service);
+            });
+
+            container.appendChild(serviceCard);
+        });
+    }
+
+    filterServicesByCategory(category) {
+        const serviceCards = document.querySelectorAll('.service-card');
+        
+        fetch(`/services/api/?category=${encodeURIComponent(category)}`)
+            .then(response => response.json())
+            .then(data => {
+                this.renderServices(data.results || data);
+            })
+            .catch(error => {
+                console.error('Error filtering services:', error);
+            });
+    }
+
+    selectService(service) {
+        this.selectedService = service;
+        
+        // Update UI
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        document.querySelector(`[data-service-id="${service.id}"]`).classList.add('selected');
+        
+        this.updateNavigationButtons();
+    }
+
+    changeQuantity(delta) {
+        const newQuantity = this.quantity + delta;
+        if (newQuantity >= 1 && newQuantity <= 999) {
+            this.quantity = newQuantity;
+            document.getElementById('quantityDisplay').textContent = this.quantity;
+            this.updatePriceCalculation();
+        }
+    }
+
+    updatePriceCalculation() {
+        if (!this.selectedService) return;
+
+        const pricePerUnit = this.selectedService.price_per_dozen / 12;
+        const subtotal = pricePerUnit * this.quantity;
+        this.totalAmount = Math.round(subtotal * 100) / 100;
+
+        document.getElementById('priceCalculation').innerHTML = `
+            <div class="calc-row">
+                <span>Price per item:</span>
+                <span>D${pricePerUnit.toFixed(2)}</span>
+            </div>
+            <div class="calc-row">
+                <span>Quantity:</span>
+                <span>${this.quantity} items</span>
+            </div>
+            <div class="calc-row">
+                <span>Total Amount:</span>
+                <span>D${this.totalAmount.toFixed(2)}</span>
+            </div>
+        `;
+    }
+
+    updateSelectedServiceInfo() {
+        if (!this.selectedService) return;
+
+        document.getElementById('selectedServiceInfo').innerHTML = `
+            <h3>${this.selectedService.name}</h3>
+            <p>Price: D${this.selectedService.price_per_dozen}/dozen (D${(this.selectedService.price_per_dozen / 12).toFixed(2)} per item)</p>
+            <p>${this.selectedService.description || 'Professional laundry service'}</p>
+        `;
+
+        this.updatePriceCalculation();
+    }
+
+    async nextStep() {
+        if (this.currentStep < this.maxSteps) {
+            // Validate current step
+            if (!this.validateCurrentStep()) return;
+
+            // Handle step transitions
+            if (this.currentStep === 1 && this.selectedCustomer?.id === 'new') {
+                await this.createNewCustomer();
+            } else if (this.currentStep === 2) {
+                this.updateSelectedServiceInfo();
+            } else if (this.currentStep === 3) {
+                await this.createOrder();
+            }
+
+            this.currentStep++;
+            this.updateUI();
+        }
+    }
+
+    previousStep() {
+        if (this.currentStep > 1) {
+            this.currentStep--;
+            this.updateUI();
+        }
+    }
+
+    validateCurrentStep() {
+        switch (this.currentStep) {
+            case 1:
+                return this.selectedCustomer !== null;
+            case 2:
+                return this.selectedService !== null;
+            case 3:
+                return this.quantity > 0;
+            default:
+                return true;
+        }
+    }
+
+    async createNewCustomer() {
+        try {
+            const response = await fetch('/customers/api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    name: this.selectedCustomer.name,
+                    phone: this.selectedCustomer.phone,
+                    email: this.selectedCustomer.email,
+                    address: this.selectedCustomer.address
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                this.selectedCustomer = data;
+                this.showSuccess('Customer created successfully!');
+            } else {
+                throw new Error(data.error || 'Failed to create customer');
+            }
+        } catch (error) {
+            console.error('Error creating customer:', error);
+            this.showError('Failed to create customer: ' + error.message);
+            throw error;
+        }
+    }
+
+    async createOrder() {
+        try {
+            this.showLoading();
+
+            const response = await fetch('/orders/api/quick-create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    customer_id: this.selectedCustomer.id,
+                    lines: [{
+                        service_id: this.selectedService.id,
+                        pieces: this.quantity,
+                        price_per_dozen: this.selectedService.price_per_dozen
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                this.createdOrderId = data.id;
+                this.showOrderSummary(data);
+                this.showSuccess('Order created successfully!');
+            } else {
+                throw new Error(data.error || 'Failed to create order');
+            }
+        } catch (error) {
+            console.error('Error creating order:', error);
+            this.showError('Failed to create order: ' + error.message);
+            throw error;
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    showOrderSummary(order) {
+        document.getElementById('orderSummary').innerHTML = `
+            <div class="order-number">Order #${order.order_number}</div>
+            <div class="calc-row">
+                <span>Customer:</span>
+                <span>${this.selectedCustomer.name}</span>
+            </div>
+            <div class="calc-row">
+                <span>Service:</span>
+                <span>${this.selectedService.name}</span>
+            </div>
+            <div class="calc-row">
+                <span>Quantity:</span>
+                <span>${this.quantity} items</span>
+            </div>
+            <div class="calc-row">
+                <span>Total Amount:</span>
+                <span>D${this.totalAmount.toFixed(2)}</span>
+            </div>
+        `;
+    }
+
+    updateUI() {
+        // Update progress steps
+        document.querySelectorAll('.progress-step').forEach((step, index) => {
+            const stepNumber = index + 1;
+            if (stepNumber < this.currentStep) {
+                step.classList.add('completed');
+                step.classList.remove('active');
+            } else if (stepNumber === this.currentStep) {
+                step.classList.add('active');
+                step.classList.remove('completed');
+            } else {
+                step.classList.remove('active', 'completed');
+            }
+        });
+
+        // Update step content
+        document.querySelectorAll('.step-content').forEach((content, index) => {
+            if (index + 1 === this.currentStep) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+
+        // Update title
+        const titles = [
+            'Select Customer',
+            'Choose Service',
+            'Add Items',
+            'Receipt & Sharing'
+        ];
+        document.getElementById('workflowTitle').textContent = titles[this.currentStep - 1];
+
+        this.updateNavigationButtons();
+    }
+
+    updateNavigationButtons() {
+        const backBtn = document.getElementById('backBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Back button
+        backBtn.style.display = this.currentStep === 1 ? 'none' : 'block';
+
+        // Next button
+        const isValid = this.validateCurrentStep();
+        nextBtn.disabled = !isValid;
+
+        if (this.currentStep === this.maxSteps) {
+            nextBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = 'block';
+            nextBtn.innerHTML = this.currentStep === 3 ? 
+                'Create Order <i class="fas fa-check"></i>' : 
+                'Next <i class="fas fa-arrow-right"></i>';
+        }
+    }
+
+    shareViaWhatsApp() {
+        if (this.createdOrderId) {
+            window.open(`/orders/${this.createdOrderId}/whatsapp/share/`, '_blank');
+        }
+    }
+
+    printReceipt() {
+        if (this.createdOrderId) {
+            window.open(`/orders/${this.createdOrderId}/receipt/`, '_blank');
+        }
+    }
+
+    downloadPdf() {
+        if (this.createdOrderId) {
+            window.open(`/orders/${this.createdOrderId}/receipt/pdf/`, '_blank');
+        }
+    }
+
+    showLoading() {
+        document.body.classList.add('loading');
+    }
+
+    hideLoading() {
+        document.body.classList.remove('loading');
+    }
+
+    showError(message) {
+        // Create and show error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        
+        const content = document.querySelector('.workflow-content');
+        content.insertBefore(errorDiv, content.firstChild);
+        
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
+
+    showSuccess(message) {
+        // Create and show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        
+        const content = document.querySelector('.workflow-content');
+        content.insertBefore(successDiv, content.firstChild);
+        
+        setTimeout(() => successDiv.remove(), 3000);
+    }
+}
+
+// Global functions for navigation
+function nextStep() {
+    window.mobileWorkflow.nextStep();
+}
+
+function previousStep() {
+    window.mobileWorkflow.previousStep();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize if mobile workflow is visible
+    if (window.innerWidth <= 768) {
+        window.mobileWorkflow = new MobileWorkflow();
+    }
+    
+    // Add resize listener to handle orientation changes
+    window.addEventListener('resize', function() {
+        if (window.innerWidth <= 768 && !window.mobileWorkflow) {
+            window.mobileWorkflow = new MobileWorkflow();
+        }
+    });
+});
+</script>
+{% endblock %}

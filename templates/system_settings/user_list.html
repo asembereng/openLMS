@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-management-page {
+        padding: 2rem 0;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        color: var(--dark-color);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    .users-grid {
+        display: grid;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .user-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .user-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+    
+    .user-details h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark-color);
+        font-size: 1.25rem;
+    }
+    
+    .user-details p {
+        margin: 0;
+        color: var(--text-gray);
+        font-size: 0.9rem;
+    }
+    
+    .user-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+    }
+    
+    .user-status.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .user-status.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .user-role {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+    
+    .user-role.admin {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .user-role.normal {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: var(--text-gray);
+    }
+    
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-main {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-main:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-gray);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        border: 1px solid #e5e7eb;
+        color: var(--text-gray);
+    }
+    
+    .pagination .current {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination a:hover {
+        background: #f3f4f6;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .user-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .user-actions {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-management-page">
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-users"></i> User Management</h1>
+            <a href="{% url 'system_settings:user_create' %}" class="btn-main">
+                <i class="fas fa-user-plus"></i> Add New User
+            </a>
+        </div>
+        
+        {% if users %}
+            <div class="users-grid">
+                {% for user in users %}
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </div>
+                                <div class="user-details">
+                                    <h3>{{ user.get_full_name|default:user.username }}</h3>
+                                    <p>@{{ user.username }}</p>
+                                    {% if user.email %}
+                                        <p><i class="fas fa-envelope"></i> {{ user.email }}</p>
+                                    {% endif %}
+                                    <p><i class="fas fa-calendar"></i> Joined {{ user.date_joined|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="user-status {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                <i class="fas fa-circle"></i>
+                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="user-role {% if user.profile.role == 'admin' %}admin{% else %}normal{% endif %}">
+                            <i class="fas fa-{% if user.profile.role == 'admin' %}crown{% else %}user{% endif %}"></i>
+                            {{ user.profile.get_role_display }}
+                        </div>
+                        
+                        <div class="user-actions">
+                            <a href="{% url 'system_settings:user_detail' user.pk %}" class="btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'system_settings:user_edit' user.pk %}" class="btn-sm btn-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {% if user.is_active %}
+                                <a href="{% url 'system_settings:user_deactivate' user.pk %}" class="btn-sm btn-secondary">
+                                    <i class="fas fa-user-slash"></i> Deactivate
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    {% endif %}
+                    
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>No Users Found</h3>
+                <p>Get started by creating your first user account.</p>
+                <a href="{% url 'system_settings:user_create' %}" class="btn-main">
+                    <i class="fas fa-user-plus"></i> Create First User
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

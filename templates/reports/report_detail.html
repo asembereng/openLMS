@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_format %}
+
+{% block title %}{{ report.title }} - Reports - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-meta {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .status-badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-generating {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-failed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .report-table {
+        margin-bottom: 0;
+    }
+    
+    .report-table th {
+        background: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .report-table td {
+        text-align: right;
+        vertical-align: middle;
+    }
+    
+    .report-summary {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 4px;
+    }
+    
+    .export-btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .parameter-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Report Header -->
+    <div class="report-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-chart-line me-2"></i>
+                    {{ report.title }}
+                </h2>
+                <p class="mb-0 opacity-75">
+                    {{ report.template.get_report_type_display }} • Generated {{ report.generated_at|date:"M d, Y H:i" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-badge status-{{ report.status }}">
+                    {% if report.status == 'completed' %}
+                        <i class="fas fa-check-circle me-1"></i>
+                        Completed
+                    {% elif report.status == 'generating' %}
+                        <i class="fas fa-spinner fa-spin me-1"></i>
+                        Generating
+                    {% elif report.status == 'failed' %}
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Failed
+                    {% else %}
+                        <i class="fas fa-clock me-1"></i>
+                        {{ report.get_status_display }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Report Content -->
+        <div class="col-lg-9">
+            {% if report.status == 'completed' %}
+                <div class="report-content">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-table me-2"></i>
+                            Report Data
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if report.data.summary %}
+                            <div class="report-summary m-3">
+                                <h6><i class="fas fa-info-circle me-2"></i>Summary</h6>
+                                {% for key, value in report.data.summary.items %}
+                                    <div class="row mb-1">
+                                        <div class="col-6"><strong>{{ key }}:</strong></div>
+                                        <div class="col-6">
+                                            {% if 'amount' in key.lower or 'revenue' in key.lower or 'profit' in key.lower or 'expense' in key.lower %}
+                                                {{ value|currency_symbol }}
+                                            {% elif 'margin' in key.lower %}
+                                                {{ value|floatformat:2 }}%
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if report.data.data %}
+                            <div class="table-responsive">
+                                <table class="table table-striped report-table">
+                                    {% if report.data.data.0 %}
+                                        <thead>
+                                            <tr>
+                                                {% for header in report.data.data.0.keys %}
+                                                    <th>{{ header|capfirst }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in report.data.data %}
+                                                <tr>
+                                                    {% for key, value in row.items %}
+                                                        <td>
+                                                            {% if 'amount' in key.lower or 'revenue' in key.lower or 'price' in key.lower or 'profit' in key.lower or 'expense' in key.lower %}
+                                                                {{ value|currency_html }}
+                                                            {% elif 'date' in key.lower %}
+                                                                {{ value|date:"M d, Y" }}
+                                                            {% elif 'margin' in key.lower %}
+                                                                {{ value|floatformat:2 }}%
+                                                            {% else %}
+                                                                {{ value }}
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="no-data">
+                                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                <h5>No Data Available</h5>
+                                <p>This report contains no data for the selected criteria.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% elif report.status == 'failed' %}
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Report Generation Failed</h5>
+                    {% if report.error_message %}
+                        <p class="mb-0">{{ report.error_message }}</p>
+                    {% else %}
+                        <p class="mb-0">An error occurred while generating this report. Please try again.</p>
+                    {% endif %}
+                </div>
+            {% elif report.status == 'generating' %}
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-spinner fa-spin me-2"></i>Report Generation In Progress</h5>
+                    <p class="mb-0">Please wait while the report is being generated. This page will automatically refresh.</p>
+                </div>
+                <script>
+                    // Auto-refresh every 5 seconds if report is still generating
+                    setTimeout(function() {
+                        location.reload();
+                    }, 5000);
+                </script>
+            {% endif %}
+        </div>
+
+        <!-- Report Sidebar -->
+        <div class="col-lg-3">
+            <div class="report-meta">
+                <h6><i class="fas fa-info-circle me-2"></i>Report Information</h6>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Template</small>
+                    <strong>{{ report.template.name }}</strong>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Generated By</small>
+                    <strong>{{ report.generated_by.get_full_name|default:report.generated_by.username }}</strong>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Generated At</small>
+                    <strong>{{ report.generated_at|date:"M d, Y H:i" }}</strong>
+                </div>
+                
+                {% if report.date_from or report.date_to %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Date Range</small>
+                        <strong>
+                            {% if report.date_from %}{{ report.date_from|date:"M d, Y" }}{% endif %}
+                            {% if report.date_from and report.date_to %} - {% endif %}
+                            {% if report.date_to %}{{ report.date_to|date:"M d, Y" }}{% endif %}
+                        </strong>
+                    </div>
+                {% endif %}
+                
+                {% if report.generation_time %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Generation Time</small>
+                        <strong>{{ report.generation_time.total_seconds|floatformat:2 }}s</strong>
+                    </div>
+                {% endif %}
+                
+                {% if report.data_size %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Data Size</small>
+                        <strong>{{ report.data_size|filesizeformat }}</strong>
+                    </div>
+                {% endif %}
+
+                {% if report.parameters %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Parameters</small>
+                        {% for key, value in report.parameters.items %}
+                            <span class="parameter-item">
+                                <strong>{{ key|title }}:</strong> {{ value }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if report.status == 'completed' %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-download me-2"></i>
+                            Export Options
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <button onclick="exportReport('pdf')" class="btn btn-outline-danger export-btn">
+                            <i class="fas fa-file-pdf me-1"></i>
+                            PDF
+                        </button>
+                        <button onclick="exportReport('excel')" class="btn btn-outline-success export-btn">
+                            <i class="fas fa-file-excel me-1"></i>
+                            Excel
+                        </button>
+                        <button onclick="exportReport('csv')" class="btn btn-outline-info export-btn">
+                            <i class="fas fa-file-csv me-1"></i>
+                            CSV
+                        </button>
+                        <button onclick="exportReport('json')" class="btn btn-outline-warning export-btn">
+                            <i class="fas fa-file-code me-1"></i>
+                            JSON
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="mt-3 d-flex justify-content-between">
+                <a href="{% url 'reports:report_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Reports
+                </a>
+                <a href="{% url 'reports:report_delete' report.pk %}" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i>
+                    Delete Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh for generating reports
+    {% if report.status == 'generating' %}
+        setTimeout(function() {
+            location.reload();
+        }, 5000);
+    {% endif %}
+
+    // Export functionality
+    function exportReport(format) {
+        const reportId = {{ report.pk }};
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Exporting...';
+        
+        // Make API call to create export
+        fetch(`/reports/api/generated/${reportId}/export/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ format: format })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.download_url) {
+                // Redirect to download URL
+                window.location.href = data.download_url;
+                
+                // Show success message
+                showNotification('Export completed successfully!', 'success');
+            } else {
+                throw new Error(data.error || 'Export failed');
+            }
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            showNotification('Export failed: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            button.disabled = false;
+            button.innerHTML = originalText;
+        });
+    }
+
+    // Show notification function
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas ${icon} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+</script>
+{% endblock %}
