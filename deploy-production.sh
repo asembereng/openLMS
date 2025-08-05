@@ -2,7 +2,8 @@
 
 # A&F Laundry Management System - Production Deployment Script
 # Version: 1.0.0
-# Date: December 19, 2024
+# Date: August 5, 2025
+# Hostname: af.proxysolutions.io
 
 set -euo pipefail
 
@@ -20,6 +21,7 @@ APP_DIR="/opt/openlms"
 DOCKER_COMPOSE_FILE="docker-compose.production.yml"
 BACKUP_DIR="/opt/backups/openlms"
 LOG_FILE="/var/log/openlms-deploy.log"
+HOSTNAME="af.proxysolutions.io"
 
 # Functions
 log() {
@@ -39,6 +41,48 @@ info() {
     echo -e "${BLUE}[INFO] $1${NC}" | tee -a "$LOG_FILE"
 }
 
+# Prompt user for installation
+prompt_install() {
+    local package_name="$1"
+    local install_command="$2"
+    
+    echo -e "${YELLOW}[PROMPT] $package_name is not installed.${NC}"
+    read -p "Would you like to install $package_name now? (y/n): " -n 1 -r
+    echo    # Move to a new line
+    
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        info "Installing $package_name..."
+        if eval "$install_command"; then
+            log "$package_name installed successfully"
+            return 0
+        else
+            error "Failed to install $package_name"
+        fi
+    else
+        warning "Skipping $package_name installation"
+        return 1
+    fi
+}
+
+# Detect operating system
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command -v apt-get &> /dev/null; then
+            echo "ubuntu"
+        elif command -v yum &> /dev/null; then
+            echo "centos"
+        elif command -v dnf &> /dev/null; then
+            echo "fedora"
+        else
+            echo "linux"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "unknown"
+    fi
+}
+
 # Check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
@@ -50,28 +94,193 @@ check_root() {
 check_requirements() {
     info "Checking system requirements..."
     
+    local missing_requirements=()
+    local os_type=$(detect_os)
+    
+    info "Detected OS: $os_type"
+    
     # Check Docker
     if ! command -v docker &> /dev/null; then
-        error "Docker is not installed. Please install Docker first."
+        info "Docker is not installed."
+        case $os_type in
+            "ubuntu")
+                install_cmd="curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER && newgrp docker"
+                ;;
+            "centos"|"fedora")
+                install_cmd="curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER && sudo systemctl enable docker && sudo systemctl start docker"
+                ;;
+            "macos")
+                install_cmd="echo 'Please install Docker Desktop for Mac from https://www.docker.com/products/docker-desktop'"
+                ;;
+            *)
+                install_cmd="curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER"
+                ;;
+        esac
+        
+        if prompt_install "Docker" "$install_cmd"; then
+            info "Docker installed. You may need to log out and back in for group changes to take effect."
+        else
+            missing_requirements+=("Docker")
+        fi
+    else
+        log "Docker is installed"
     fi
     
     # Check Docker Compose
     if ! command -v docker-compose &> /dev/null; then
-        error "Docker Compose is not installed. Please install Docker Compose first."
+        info "Docker Compose is not installed."
+        case $os_type in
+            "ubuntu"|"centos"|"fedora"|"linux")
+                install_cmd="sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose"
+                ;;
+            "macos")
+                install_cmd="brew install docker-compose || echo 'Please install Docker Compose manually or via Docker Desktop'"
+                ;;
+            *)
+                install_cmd="echo 'Please install Docker Compose manually for your OS'"
+                ;;
+        esac
+        
+        if prompt_install "Docker Compose" "$install_cmd"; then
+            log "Docker Compose installed successfully"
+        else
+            missing_requirements+=("Docker Compose")
+        fi
+    else
+        log "Docker Compose is installed"
     fi
     
     # Check Git
     if ! command -v git &> /dev/null; then
-        error "Git is not installed. Please install Git first."
+        info "Git is not installed."
+        case $os_type in
+            "ubuntu")
+                install_cmd="sudo apt-get update && sudo apt-get install -y git"
+                ;;
+            "centos")
+                install_cmd="sudo yum install -y git"
+                ;;
+            "fedora")
+                install_cmd="sudo dnf install -y git"
+                ;;
+            "macos")
+                install_cmd="brew install git || xcode-select --install"
+                ;;
+            *)
+                install_cmd="echo 'Please install Git manually for your OS'"
+                ;;
+        esac
+        
+        if prompt_install "Git" "$install_cmd"; then
+            log "Git installed successfully"
+        else
+            missing_requirements+=("Git")
+        fi
+    else
+        log "Git is installed"
+    fi
+    
+    # Check curl
+    if ! command -v curl &> /dev/null; then
+        info "curl is not installed."
+        case $os_type in
+            "ubuntu")
+                install_cmd="sudo apt-get update && sudo apt-get install -y curl"
+                ;;
+            "centos")
+                install_cmd="sudo yum install -y curl"
+                ;;
+            "fedora")
+                install_cmd="sudo dnf install -y curl"
+                ;;
+            "macos")
+                install_cmd="brew install curl"
+                ;;
+            *)
+                install_cmd="echo 'Please install curl manually for your OS'"
+                ;;
+        esac
+        
+        if prompt_install "curl" "$install_cmd"; then
+            log "curl installed successfully"
+        else
+            missing_requirements+=("curl")
+        fi
+    else
+        log "curl is installed"
+    fi
+    
+    # Check Python3 (needed for Django secret key generation)
+    if ! command -v python3 &> /dev/null; then
+        info "Python3 is not installed."
+        case $os_type in
+            "ubuntu")
+                install_cmd="sudo apt-get update && sudo apt-get install -y python3 python3-pip"
+                ;;
+            "centos")
+                install_cmd="sudo yum install -y python3 python3-pip"
+                ;;
+            "fedora")
+                install_cmd="sudo dnf install -y python3 python3-pip"
+                ;;
+            "macos")
+                install_cmd="brew install python3"
+                ;;
+            *)
+                install_cmd="echo 'Please install Python3 manually for your OS'"
+                ;;
+        esac
+        
+        if prompt_install "Python3" "$install_cmd"; then
+            log "Python3 installed successfully"
+        else
+            missing_requirements+=("Python3")
+        fi
+    else
+        log "Python3 is installed"
     fi
     
     # Check available disk space (minimum 5GB)
     available_space=$(df / | awk 'NR==2 {print $4}')
     if [ "$available_space" -lt 5242880 ]; then  # 5GB in KB
-        warning "Low disk space. Minimum 5GB recommended."
+        warning "Low disk space. Available: $(($available_space / 1024 / 1024))GB. Minimum 5GB recommended."
+    else
+        log "Sufficient disk space available: $(($available_space / 1024 / 1024))GB"
     fi
     
-    log "System requirements check completed"
+    # Check if any critical requirements are missing
+    if [ ${#missing_requirements[@]} -gt 0 ]; then
+        echo ""
+        error "Critical requirements missing: ${missing_requirements[*]}"
+        echo ""
+        info "Manual installation instructions:"
+        
+        for req in "${missing_requirements[@]}"; do
+            case $req in
+                "Docker")
+                    echo "• Docker: Visit https://docs.docker.com/get-docker/ for installation instructions"
+                    ;;
+                "Docker Compose")
+                    echo "• Docker Compose: Visit https://docs.docker.com/compose/install/ for installation instructions"
+                    ;;
+                "Git")
+                    echo "• Git: Visit https://git-scm.com/downloads for installation instructions"
+                    ;;
+                "curl")
+                    echo "• curl: Usually available in most package managers (apt, yum, dnf, brew)"
+                    ;;
+                "Python3")
+                    echo "• Python3: Visit https://www.python.org/downloads/ for installation instructions"
+                    ;;
+            esac
+        done
+        
+        echo ""
+        echo "After installing the missing requirements, run this script again."
+        exit 1
+    fi
+    
+    log "System requirements check completed successfully"
 }
 
 # Create necessary directories
@@ -130,7 +339,7 @@ setup_environment() {
 # Production Configuration
 SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
 DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1,$(hostname -I | awk '{print $1}')
+ALLOWED_HOSTS=$HOSTNAME,localhost,127.0.0.1,$(hostname -I | awk '{print $1}' 2>/dev/null || echo "")
 
 # Database
 DATABASE_URL=sqlite:///data/db.sqlite3
@@ -141,7 +350,7 @@ EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
-DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+DEFAULT_FROM_EMAIL=noreply@$HOSTNAME
 
 # Security
 SECURE_SSL_REDIRECT=False
@@ -225,18 +434,27 @@ health_check() {
     max_attempts=30
     attempt=1
     
+    # Try multiple URLs for health check
+    health_urls=(
+        "http://localhost:8000/health/"
+        "http://127.0.0.1:8000/health/"
+        "http://$HOSTNAME:8000/health/"
+    )
+    
     while [ $attempt -le $max_attempts ]; do
-        if curl -f -s http://localhost:8000/health/ > /dev/null 2>&1; then
-            log "Health check passed - Application is running"
-            return 0
-        fi
+        for url in "${health_urls[@]}"; do
+            if curl -f -s --connect-timeout 5 --max-time 10 "$url" > /dev/null 2>&1; then
+                log "Health check passed - Application is running at $url"
+                return 0
+            fi
+        done
         
         info "Health check attempt $attempt/$max_attempts - Waiting..."
         sleep 5
         ((attempt++))
     done
     
-    error "Health check failed - Application may not be running properly"
+    error "Health check failed - Application may not be running properly. Check logs with: docker-compose -f $DOCKER_COMPOSE_FILE logs"
 }
 
 # Display status and next steps
@@ -251,16 +469,23 @@ show_status() {
     echo ""
     info "Next steps:"
     echo "1. Configure your web server (Nginx) to proxy to port 8000"
-    echo "2. Set up SSL certificates for production"
+    echo "2. Set up SSL certificates for production: certbot --nginx -d $HOSTNAME"
     echo "3. Create admin user: docker-compose -f $DOCKER_COMPOSE_FILE exec web python manage.py createsuperuser"
     echo "4. Configure email settings in .env file"
-    echo "5. Set up regular backups"
+    echo "5. Set up regular backups with: ./deploy-production.sh backup"
+    echo "6. Monitor logs with: ./deploy-production.sh logs"
     echo ""
     info "Application URLs:"
-    echo "- Main Application: http://$(hostname -I | awk '{print $1}'):8000/"
-    echo "- Admin Panel: http://$(hostname -I | awk '{print $1}'):8000/admin/"
-    echo "- API Documentation: http://$(hostname -I | awk '{print $1}'):8000/api/docs/"
-    echo "- Health Check: http://$(hostname -I | awk '{print $1}'):8000/health/"
+    echo "- Main Application: http://$HOSTNAME:8000/"
+    echo "- Admin Panel: http://$HOSTNAME:8000/admin/"
+    echo "- API Documentation: http://$HOSTNAME:8000/api/docs/"
+    echo "- Health Check: http://$HOSTNAME:8000/health/"
+    echo ""
+    info "Alternative URLs (if hostname resolution fails):"
+    echo "- Main Application: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8000/"
+    echo "- Admin Panel: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8000/admin/"
+    echo "- API Documentation: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8000/api/docs/"
+    echo "- Health Check: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8000/health/"
     echo ""
     info "Log locations:"
     echo "- Deployment log: $LOG_FILE"
