@@ -10,6 +10,12 @@ import dj_database_url
 from decimal import Decimal
 import os
 
+# Import version info
+try:
+    from .version import __version__
+except ImportError:
+    __version__ = "1.0.0"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -243,10 +249,55 @@ REST_FRAMEWORK = {
 # DRF Spectacular (API Documentation)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'A&F Laundry Services API',
-    'DESCRIPTION': 'API for Laundry Management System',
+    'DESCRIPTION': 'RESTful API for the Laundry Management System with customer management, orders, services, expenses, and reporting capabilities.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': '/api/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_DIST': 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest',
+    'SWAGGER_UI_FAVICON_HREF': 'https://fastapi.tiangolo.com/img/favicon.png',
+    'REDOC_DIST': 'https://cdn.jsdelivr.net/npm/redoc@latest',
+    'PREPROCESSING_HOOKS': [],
+    'POSTPROCESSING_HOOKS': [],
+    'OAUTH2_FLOWS': [],
+    'OAUTH2_AUTHORIZATION_URL': None,
+    'OAUTH2_TOKEN_URL': None,
+    'OAUTH2_REFRESH_URL': None,
+    'OAUTH2_SCOPES': None,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        'filter': True,
+        'defaultModelsExpandDepth': 2,
+        'defaultModelExpandDepth': 2,
+    },
+    'REDOC_UI_SETTINGS': {
+        'hideDownloadButton': False,
+        'hideHostname': False,
+        'hideLoading': False,
+        'hideSchemaPattern': True,
+        'expandResponses': '200,201',
+        'pathInMiddlePanel': True,
+        'nativeScrollbars': False,
+        'theme': {
+            'colors': {
+                'primary': {
+                    'main': '#4f46e5'
+                }
+            }
+        },
+        'codeSamples': True,
+        'untrustedSpec': False
+    },
+    'TAGS': [
+        {'name': 'customers', 'description': 'Customer management operations'},
+        {'name': 'services', 'description': 'Service types and pricing management'},
+        {'name': 'orders', 'description': 'Order processing and tracking'},
+        {'name': 'expenses', 'description': 'Business expense management'},
+        {'name': 'reports', 'description': 'Business analytics and reporting'},
+        {'name': 'auth', 'description': 'Authentication and user management'},
+    ],
 }
 
 # Django Allauth with robust email handling

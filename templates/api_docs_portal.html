@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A&F Laundry Services - API Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        .container-fluid {
+            padding-top: 2rem;
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-radius: 20px 20px 0 0 !important;
+            border: none;
+        }
+        .btn-api {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn-api:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+            color: white;
+        }
+        .btn-api.redoc {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .btn-api.redoc:hover {
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+        }
+        .btn-api.schema {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .btn-api.schema:hover {
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        .endpoint-section {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .endpoint-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4f46e5;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+        .method.get { background: #10b981; color: white; }
+        .method.post { background: #3b82f6; color: white; }
+        .method.put { background: #f59e0b; color: white; }
+        .method.delete { background: #ef4444; color: white; }
+        .code-samples {
+            margin-top: 20px;
+        }
+        .language-tab {
+            background: #1f2937;
+            color: #e5e7eb;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.9rem;
+            margin-right: 2px;
+        }
+        .language-tab.active {
+            background: #374151;
+            color: white;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 20px;
+            border-radius: 0 8px 8px 8px;
+            margin: 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .auth-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .toc {
+            position: sticky;
+            top: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+        .toc a {
+            color: #6b7280;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+            font-size: 0.9rem;
+        }
+        .toc a:hover {
+            color: #4f46e5;
+        }
+        .response-example {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Table of Contents -->
+            <div class="col-lg-3">
+                <div class="toc">
+                    <h5><i class="fas fa-list me-2"></i>Table of Contents</h5>
+                    <a href="#overview">Overview</a>
+                    <a href="#authentication">Authentication</a>
+                    <a href="#customers-api">Customers API</a>
+                    <a href="#services-api">Services API</a>
+                    <a href="#orders-api">Orders API</a>
+                    <a href="#expenses-api">Expenses API</a>
+                    <a href="#reports-api">Reports API</a>
+                    <a href="#error-handling">Error Handling</a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <div class="card">
+                    <div class="card-header text-center py-4">
+                        <h1><i class="fas fa-tshirt me-3"></i>A&F Laundry Services</h1>
+                        <h4>API Reference Documentation</h4>
+                    </div>
+                    <div class="card-body p-5">
+                        
+                        <!-- Overview Section -->
+                        <section id="overview" class="endpoint-section">
+                            <h2><i class="fas fa-info-circle me-2"></i>Overview</h2>
+                            <p class="lead">
+                                Welcome to the A&F Laundry Management System API! This guide is designed for developers 
+                                of all skill levels, especially those new to API integration. We'll walk you through 
+                                everything you need to know to successfully integrate with our laundry management system.
+                            </p>
+
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="auth-info">
+                                        <h5><i class="fas fa-lightbulb me-2"></i>What is an API?</h5>
+                                        <p class="mb-0">
+                                            An API (Application Programming Interface) is like a menu in a restaurant. 
+                                            It shows you what data you can request from our system and how to request it. 
+                                            Our API lets you create customers, manage orders, and access business reports 
+                                            from your own applications.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="response-example">
+                                        <h5><i class="fas fa-rocket me-2"></i>What can you build?</h5>
+                                        <ul class="mb-0">
+                                            <li>Mobile apps for customers to track orders</li>
+                                            <li>Integration with accounting software</li>
+                                            <li>Custom reports and dashboards</li>
+                                            <li>Automated order processing systems</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="auth-info">
+                                <h5><i class="fas fa-map-route me-2"></i>Getting Started (5-Minute Quick Start)</h5>
+                                <ol>
+                                    <li><strong>Get your API credentials</strong> - Contact support for a JWT token</li>
+                                    <li><strong>Test the connection</strong> - Use the examples below to fetch customer list</li>
+                                    <li><strong>Create your first customer</strong> - Follow our step-by-step examples</li>
+                                    <li><strong>Place an order</strong> - Complete the workflow with a sample order</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="row text-center mt-4">
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="fas fa-code fa-2x text-primary mb-2"></i>
+                                        <h6>Swagger UI</h6>
+                                        <a href="/api/docs/" class="btn-api btn-sm" target="_blank">
+                                            <i class="fas fa-external-link-alt me-1"></i>Interactive Docs
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="fas fa-book fa-2x text-danger mb-2"></i>
+                                        <h6>ReDoc</h6>
+                                        <a href="/api/redoc/" class="btn-api redoc btn-sm" target="_blank">
+                                            <i class="fas fa-external-link-alt me-1"></i>ReDoc
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="fas fa-download fa-2x text-success mb-2"></i>
+                                        <h6>OpenAPI Schema</h6>
+                                        <a href="/api/schema/" class="btn-api schema btn-sm" target="_blank">
+                                            <i class="fas fa-download me-1"></i>Schema
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h5><i class="fas fa-server me-2"></i>Base URL (Where to Send Requests)</h5>
+                                <p>All API requests should be sent to this base URL:</p>
+                                <div class="code-block">
+                                    <code>http://127.0.0.1:8000/</code>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Note:</strong> This is the development server. In production, this will be your actual domain name.
+                                </small>
+                            </div>
+
+                            <div class="mt-4">
+                                <h5><i class="fas fa-question-circle me-2"></i>Common Questions for Beginners</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="response-example mb-3">
+                                            <h6>What's a REST API?</h6>
+                                            <p class="mb-0">It's a way for your app to "talk" to our system using simple HTTP requests (like visiting a website, but for data).</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="response-example mb-3">
+                                            <h6>What's JSON?</h6>
+                                            <p class="mb-0">JSON is a simple text format for exchanging data. It looks like: <code>{"name": "John", "age": 30}</code></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="response-example mb-3">
+                                            <h6>What are HTTP methods?</h6>
+                                            <p class="mb-0">GET = fetch data, POST = create new, PUT = update, DELETE = remove</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="response-example mb-3">
+                                            <h6>What's an API key/token?</h6>
+                                            <p class="mb-0">It's like a password that identifies your app to our system.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Authentication Section -->
+                        <section id="authentication" class="endpoint-section">
+                            <h2><i class="fas fa-lock me-2"></i>Authentication (How to Prove You're Allowed)</h2>
+                            <p>
+                                Before you can access our API, you need to prove you're authorized. Think of it like 
+                                showing your ID at a secure building. We support two methods:
+                            </p>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="auth-info">
+                                        <h6><i class="fas fa-key me-2"></i>Method 1: JWT Token (Recommended for Apps)</h6>
+                                        <p><strong>Best for:</strong> Mobile apps, external integrations</p>
+                                        <p><strong>How it works:</strong></p>
+                                        <ol>
+                                            <li>Get a token from support or login endpoint</li>
+                                            <li>Include it in every request header</li>
+                                            <li>Token expires after 24 hours (get a new one)</li>
+                                        </ol>
+                                        <div class="code-block mb-2">
+                                            <strong>Example Header:</strong><br>
+                                            <code>Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...</code>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="auth-info">
+                                        <h6><i class="fas fa-shield-alt me-2"></i>Method 2: Session Authentication</h6>
+                                        <p><strong>Best for:</strong> Web applications, browser-based tools</p>
+                                        <p><strong>How it works:</strong></p>
+                                        <ol>
+                                            <li>User logs in through the web interface</li>
+                                            <li>Browser automatically includes session cookies</li>
+                                            <li>Works automatically in web browsers</li>
+                                        </ol>
+                                        <div class="code-block mb-2">
+                                            <strong>No extra headers needed</strong><br>
+                                            <small>Cookies are sent automatically</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="response-example">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Common Authentication Errors</h6>
+                                <ul class="mb-0">
+                                    <li><strong>401 Unauthorized:</strong> Missing or invalid token - check your Authorization header</li>
+                                    <li><strong>403 Forbidden:</strong> Valid token but not enough permissions for this action</li>
+                                    <li><strong>Token expired:</strong> Get a fresh token from the login endpoint</li>
+                                </ul>
+                            </div>
+
+                            <div class="auth-info">
+                                <h6><i class="fas fa-code me-2"></i>Quick Test: Check If Your Token Works</h6>
+                                <div class="code-block">
+curl -X GET "http://127.0.0.1:8000/customers/api/stats/" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# If successful, you'll get customer statistics
+# If failed, you'll get an error message explaining why</div>
+                            </div>
+                        </section>
+
+                        <!-- Customers API Section -->
+                        <section id="customers-api" class="endpoint-section">
+                            <h2><i class="fas fa-users me-2"></i>Customers API - Complete Beginner's Guide</h2>
+                            <p>
+                                The Customers API helps you manage customer profiles in the laundry system. Think of it as 
+                                a digital address book with extra features like tracking how much each customer has spent.
+                            </p>
+
+                            <div class="auth-info">
+                                <h5><i class="fas fa-graduation-cap me-2"></i>Learning Path: Start Here!</h5>
+                                <ol>
+                                    <li><strong>First:</strong> Get a list of existing customers (GET request)</li>
+                                    <li><strong>Then:</strong> Look at one customer in detail (GET with ID)</li>
+                                    <li><strong>Finally:</strong> Create a new customer (POST request)</li>
+                                </ol>
+                                <p class="mb-0"><strong>💡 Tip:</strong> Try each step in order - it helps you understand how the API works!</p>
+                            </div>
+
+                            <!-- List Customers -->
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method get">GET</span>
+                                    <code>/customers/api/</code>
+                                    <small class="text-muted ms-2">📋 Get Customer List (Start Here!)</small>
+                                </h4>
+                                <p>
+                                    <strong>What this does:</strong> Gets a list of customers, like opening a phone book. 
+                                    You can search for specific customers or filter by active/inactive status.
+                                </p>
+                                
+                                <div class="response-example">
+                                    <h6><i class="fas fa-lightbulb me-2"></i>Why use this endpoint?</h6>
+                                    <ul class="mb-0">
+                                        <li>Find a customer before creating an order</li>
+                                        <li>Display customer list in your app</li>
+                                        <li>Search for customers by name or phone</li>
+                                        <li>Get customer statistics for reports</li>
+                                    </ul>
+                                </div>
+
+                                <h6><i class="fas fa-sliders-h me-2"></i>Optional Parameters (Filters):</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul>
+                                            <li><code>search</code> - Find customers by name, phone, or email</li>
+                                            <li><code>is_active</code> - Show only active (true) or inactive (false) customers</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul>
+                                            <li><code>page</code> - Which page of results (starts at 1)</li>
+                                            <li><code>page_size</code> - How many results per page (default: 20)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="auth-info">
+                                    <h6><i class="fas fa-play me-2"></i>Step-by-Step: Your First API Call</h6>
+                                    <ol>
+                                        <li><strong>Open your terminal/command prompt</strong></li>
+                                        <li><strong>Copy and paste this command</strong> (replace YOUR_JWT_TOKEN with your actual token):</li>
+                                    </ol>
+                                </div>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('customers-list', 'curl')">cURL</button>
+                                        <button class="language-tab" onclick="showCode('customers-list', 'python')">Python</button>
+                                        <button class="language-tab" onclick="showCode('customers-list', 'javascript')">JavaScript</button>
+                                        <button class="language-tab" onclick="showCode('customers-list', 'csharp')">C#</button>
+                                        <button class="language-tab" onclick="showCode('customers-list', 'go')">Go</button>
+                                    </div>
+
+                                    <div id="customers-list-curl" class="code-block">
+# Basic request - get all customers
+curl -X GET "http://127.0.0.1:8000/customers/api/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Search for customers with "john" in name/phone/email
+curl -X GET "http://127.0.0.1:8000/customers/api/?search=john" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Get only active customers
+curl -X GET "http://127.0.0.1:8000/customers/api/?is_active=true" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</div>
+
+                                    <div id="customers-list-python" class="code-block" style="display: none;">
+import requests
+
+# Step 1: Set up your connection details
+url = "http://127.0.0.1:8000/customers/api/"
+headers = {
+    "Accept": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"  # Replace with your actual token
+}
+
+# Step 2: Make the request
+try:
+    response = requests.get(url, headers=headers)
+    
+    # Step 3: Check if request was successful
+    if response.status_code == 200:
+        customers_data = response.json()
+        print(f"✅ Success! Found {customers_data['count']} customers")
+        
+        # Step 4: Loop through customers and print details
+        for customer in customers_data['results']:
+            print(f"📋 {customer['name']} - {customer['phone']}")
+            print(f"   💰 Total spent: ${customer['total_spent']}")
+            print(f"   📅 Last visit: {customer['last_visit']}")
+            print()
+    else:
+        print(f"❌ Error: {response.status_code} - {response.text}")
+        
+except requests.exceptions.RequestException as e:
+    print(f"🚫 Connection error: {e}")
+
+# Example with search
+search_params = {
+    "search": "john",
+    "is_active": True
+}
+search_response = requests.get(url, headers=headers, params=search_params)
+print(f"🔍 Search results: {search_response.json()['count']} customers found")</div>
+
+                                    <div id="customers-list-javascript" class="code-block" style="display: none;">
+// Step 1: Set up your request details
+const baseUrl = "http://127.0.0.1:8000/customers/api/";
+const token = "YOUR_JWT_TOKEN"; // Replace with your actual token
+
+// Step 2: Create a function to fetch customers
+async function getCustomers(searchTerm = "", activeOnly = null) {
+    try {
+        // Build the URL with parameters
+        let url = baseUrl;
+        const params = new URLSearchParams();
+        
+        if (searchTerm) params.append('search', searchTerm);
+        if (activeOnly !== null) params.append('is_active', activeOnly);
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        // Step 3: Make the request
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        // Step 4: Handle the response
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Success! Found ${data.count} customers`);
+            
+            // Step 5: Display customer information
+            data.results.forEach(customer => {
+                console.log(`📋 ${customer.name} - ${customer.phone}`);
+                console.log(`   💰 Total spent: $${customer.total_spent}`);
+                console.log(`   📅 Last visit: ${customer.last_visit}`);
+            });
+            
+            return data;
+        } else {
+            console.error(`❌ Error: ${response.status} - ${await response.text()}`);
+        }
+        
+    } catch (error) {
+        console.error(`🚫 Connection error: ${error.message}`);
+    }
+}
+
+// Example usage:
+getCustomers(); // Get all customers
+getCustomers("john"); // Search for "john"
+getCustomers("", true); // Get only active customers</div>
+
+                                    <div id="customers-list-csharp" class="code-block" style="display: none;">
+using System.Net.Http;
+using System.Threading.Tasks;
+
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+var response = await client.GetAsync(
+    "http://127.0.0.1:8000/customers/api/?search=john&is_active=true"
+);
+var content = await response.Content.ReadAsStringAsync();</div>
+
+                                    <div id="customers-list-go" class="code-block" style="display: none;">
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "io/ioutil"
+)
+
+func main() {
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", 
+        "http://127.0.0.1:8000/customers/api/?search=john&is_active=true", nil)
+    
+    req.Header.Add("Accept", "application/json")
+    req.Header.Add("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}</div>
+                                </div>
+
+                                <div class="response-example">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Response Example (What You'll Get Back):</h6>
+                                    <p><strong>Success Response (200 OK):</strong> When everything works correctly, you'll receive:</p>
+                                    <div class="code-block">
+{
+  "count": 25,              // Total number of customers matching your search
+  "next": "http://127.0.0.1:8000/customers/api/?page=2",  // URL for next page (if any)
+  "previous": null,         // URL for previous page (null if on first page)
+  "results": [              // Array of customer objects
+    {
+      "id": 1,              // Unique customer ID (use this for orders)
+      "name": "John Doe",   // Customer's full name
+      "phone": "+234-800-123-4567",  // Phone number
+      "email": "john.doe@email.com", // Email address
+      "address": "123 Lagos Street, Lagos",  // Physical address
+      "is_active": true,    // Whether customer is active
+      "total_spent": "150.00",  // Total money spent (in local currency)
+      "last_visit": "2025-01-15T10:30:00Z",  // When they last placed an order
+      "created_at": "2024-12-01T08:00:00Z"   // When account was created
+    }
+    // ... more customers
+  ]
+}</div>
+                                    
+                                    <div class="auth-info mt-3">
+                                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Common Error Responses:</h6>
+                                        <ul class="mb-0">
+                                            <li><strong>401 Unauthorized:</strong> Your token is missing or invalid</li>
+                                            <li><strong>403 Forbidden:</strong> You don't have permission to view customers</li>
+                                            <li><strong>500 Server Error:</strong> Something went wrong on our end</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Create Customer -->
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method post">POST</span>
+                                    <code>/customers/api/</code>
+                                    <small class="text-muted ms-2">➕ Create New Customer</small>
+                                </h4>
+                                <p>
+                                    <strong>What this does:</strong> Creates a new customer profile in the system. 
+                                    Think of it like filling out a registration form for a new customer.
+                                </p>
+
+                                <div class="auth-info">
+                                    <h6><i class="fas fa-clipboard-list me-2"></i>Required Information:</h6>
+                                    <ul>
+                                        <li><strong>name</strong> - Customer's full name (required)</li>
+                                        <li><strong>phone</strong> - Phone number (required, must be unique)</li>
+                                    </ul>
+                                    <h6><i class="fas fa-plus-circle me-2"></i>Optional Information:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>email</strong> - Email address (optional, but helpful)</li>
+                                        <li><strong>address</strong> - Physical address for delivery</li>
+                                    </ul>
+                                </div>
+
+                                <div class="response-example">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Important Notes:</h6>
+                                    <ul class="mb-0">
+                                        <li>Phone numbers must be unique (no duplicates allowed)</li>
+                                        <li>The system automatically sets <code>is_active: true</code></li>
+                                        <li>Creation timestamp is automatically added</li>
+                                        <li>You'll get back the complete customer object with the new ID</li>
+                                    </ul>
+                                </div>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('customers-create', 'curl')">cURL</button>
+                                        <button class="language-tab" onclick="showCode('customers-create', 'python')">Python</button>
+                                        <button class="language-tab" onclick="showCode('customers-create', 'javascript')">JavaScript</button>
+                                    </div>
+
+                                    <div id="customers-create-curl" class="code-block">
+# Basic customer creation (minimum required fields)
+curl -X POST "http://127.0.0.1:8000/customers/api/" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "name": "Jane Smith",
+    "phone": "+234-800-765-4321"
+  }'
+
+# Complete customer with all details
+curl -X POST "http://127.0.0.1:8000/customers/api/" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "name": "Jane Smith",
+    "phone": "+234-800-765-4321",
+    "email": "jane.smith@email.com",
+    "address": "456 Abuja Road, Abuja"
+  }'</div>
+
+                                    <div id="customers-create-python" class="code-block" style="display: none;">
+import requests
+
+# Step 1: Prepare customer data
+url = "http://127.0.0.1:8000/customers/api/"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+}
+
+# Step 2: Customer information (minimum required)
+customer_data = {
+    "name": "Jane Smith",
+    "phone": "+234-800-765-4321"
+}
+
+# Optional: Add more details
+customer_data_complete = {
+    "name": "Jane Smith",
+    "phone": "+234-800-765-4321",
+    "email": "jane.smith@email.com",
+    "address": "456 Abuja Road, Abuja"
+}
+
+# Step 3: Create the customer
+try:
+    response = requests.post(url, headers=headers, json=customer_data_complete)
+    
+    if response.status_code == 201:  # 201 = Created successfully
+        new_customer = response.json()
+        print(f"✅ Customer created successfully!")
+        print(f"📋 Customer ID: {new_customer['id']}")
+        print(f"👤 Name: {new_customer['name']}")
+        print(f"📞 Phone: {new_customer['phone']}")
+        print(f"🆔 You can now use ID {new_customer['id']} to create orders for this customer")
+        
+    elif response.status_code == 400:  # Bad request - validation error
+        error_details = response.json()
+        print(f"❌ Validation Error:")
+        for field, messages in error_details.items():
+            print(f"   {field}: {', '.join(messages)}")
+            
+    else:
+        print(f"❌ Unexpected error: {response.status_code} - {response.text}")
+
+except requests.exceptions.RequestException as e:
+    print(f"🚫 Connection error: {e}")
+
+# Step 4: Verify the customer was created
+verify_response = requests.get(f"{url}?search={customer_data_complete['phone']}", headers=headers)
+if verify_response.status_code == 200:
+    search_results = verify_response.json()
+    print(f"🔍 Verification: Found {search_results['count']} customer(s) with that phone number")</div>
+
+                                    <div id="customers-create-javascript" class="code-block" style="display: none;">
+// Step 1: Prepare customer data
+const url = "http://127.0.0.1:8000/customers/api/";
+const customerData = {
+  name: "Jane Smith",
+  phone: "+234-800-765-4321",
+  email: "jane.smith@email.com",
+  address: "456 Abuja Road, Abuja"
+};
+
+// Step 2: Create the customer
+async function createCustomer(customerInfo) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer YOUR_JWT_TOKEN'
+            },
+            body: JSON.stringify(customerInfo)
+        });
+
+        // Step 3: Handle different response scenarios
+        if (response.status === 201) {  // Successfully created
+            const newCustomer = await response.json();
+            console.log('✅ Customer created successfully!');
+            console.log(`📋 Customer ID: ${newCustomer.id}`);
+            console.log(`👤 Name: ${newCustomer.name}`);
+            console.log(`📞 Phone: ${newCustomer.phone}`);
+            console.log(`🆔 Use ID ${newCustomer.id} for creating orders`);
+            return newCustomer;
+            
+        } else if (response.status === 400) {  // Validation error
+            const errorDetails = await response.json();
+            console.log('❌ Validation Error:');
+            Object.keys(errorDetails).forEach(field => {
+                console.log(`   ${field}: ${errorDetails[field].join(', ')}`);
+            });
+            
+        } else {
+            console.log(`❌ Unexpected error: ${response.status} - ${await response.text()}`);
+        }
+        
+    } catch (error) {
+        console.log(`🚫 Connection error: ${error.message}`);
+    }
+}
+
+// Step 4: Execute the creation
+createCustomer(customerData);
+
+// Example: Create customer with minimal data
+const minimalCustomer = {
+    name: "John Quick",
+    phone: "+234-800-999-8888"
+};
+createCustomer(minimalCustomer);</div>
+                                </div>
+                            </div>
+
+                            <!-- Get Customer -->
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method get">GET</span>
+                                    <code>/customers/api/{id}/</code>
+                                </h4>
+                                <p>Retrieve detailed information about a specific customer.</p>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('customers-detail', 'curl')">cURL</button>
+                                        <button class="language-tab" onclick="showCode('customers-detail', 'python')">Python</button>
+                                    </div>
+
+                                    <div id="customers-detail-curl" class="code-block">
+curl -X GET "http://127.0.0.1:8000/customers/api/1/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</div>
+
+                                    <div id="customers-detail-python" class="code-block" style="display: none;">
+import requests
+
+url = "http://127.0.0.1:8000/customers/api/1/"
+headers = {
+    "Accept": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+}
+
+response = requests.get(url, headers=headers)
+customer = response.json()</div>
+                                </div>
+                            </div>
+
+                            <!-- Customer Stats -->
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method get">GET</span>
+                                    <code>/customers/api/stats/</code>
+                                </h4>
+                                <p>Get customer statistics and analytics.</p>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('customers-stats', 'curl')">cURL</button>
+                                    </div>
+
+                                    <div id="customers-stats-curl" class="code-block">
+curl -X GET "http://127.0.0.1:8000/customers/api/stats/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</div>
+                                </div>
+
+                                <div class="response-example">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Response Example:</h6>
+                                    <div class="code-block">
+{
+  "total_customers": 150,
+  "active_customers": 142,
+  "inactive_customers": 8,
+  "new_customers_this_month": 12
+}</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Services API Section -->
+                        <section id="services-api" class="endpoint-section">
+                            <h2><i class="fas fa-cogs me-2"></i>Services API</h2>
+                            <p>Manage service types, pricing, and service categories.</p>
+
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method get">GET</span>
+                                    <code>/services/api/</code>
+                                </h4>
+                                <p>List all available services with pricing information.</p>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('services-list', 'curl')">cURL</button>
+                                        <button class="language-tab" onclick="showCode('services-list', 'python')">Python</button>
+                                    </div>
+
+                                    <div id="services-list-curl" class="code-block">
+curl -X GET "http://127.0.0.1:8000/services/api/" \
+  -H "Accept: application/json"</div>
+
+                                    <div id="services-list-python" class="code-block" style="display: none;">
+import requests
+
+response = requests.get("http://127.0.0.1:8000/services/api/")
+services = response.json()</div>
+                                </div>
+
+                                <div class="response-example">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Response Example:</h6>
+                                    <div class="code-block">
+{
+  "results": [
+    {
+      "id": 1,
+      "name": "Dry Cleaning",
+      "description": "Professional dry cleaning service",
+      "price_per_dozen": "120.00",
+      "unit_price": "10.00",
+      "category": "Cleaning",
+      "is_active": true,
+      "estimated_duration_hours": 24
+    }
+  ]
+}</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Orders API Section -->
+                        <section id="orders-api" class="endpoint-section">
+                            <h2><i class="fas fa-shopping-cart me-2"></i>Orders API</h2>
+                            <p>Handle order creation, tracking, and management.</p>
+
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method post">POST</span>
+                                    <code>/orders/api/</code>
+                                </h4>
+                                <p>Create a new laundry order.</p>
+
+                                <div class="code-samples">
+                                    <div class="mb-2">
+                                        <button class="language-tab active" onclick="showCode('orders-create', 'curl')">cURL</button>
+                                        <button class="language-tab" onclick="showCode('orders-create', 'python')">Python</button>
+                                        <button class="language-tab" onclick="showCode('orders-create', 'javascript')">JavaScript</button>
+                                        <button class="language-tab" onclick="showCode('orders-create', 'csharp')">C#</button>
+                                        <button class="language-tab" onclick="showCode('orders-create', 'go')">Go</button>
+                                    </div>
+
+                                    <div id="orders-create-curl" class="code-block">
+curl -X POST "http://127.0.0.1:8000/orders/api/" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "customer": 1,
+    "service": 1,
+    "pieces": 15,
+    "special_instructions": "Handle with care",
+    "pickup_date": "2025-01-20",
+    "delivery_date": "2025-01-22"
+  }'</div>
+
+                                    <div id="orders-create-python" class="code-block" style="display: none;">
+import requests
+from datetime import datetime, timedelta
+
+url = "http://127.0.0.1:8000/orders/api/"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+}
+
+order_data = {
+    "customer": 1,
+    "service": 1,
+    "pieces": 15,
+    "special_instructions": "Handle with care",
+    "pickup_date": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+    "delivery_date": (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
+}
+
+response = requests.post(url, headers=headers, json=order_data)
+order = response.json()
+print(f"Order created with ID: {order['id']}")</div>
+
+                                    <div id="orders-create-javascript" class="code-block" style="display: none;">
+const orderData = {
+  customer: 1,
+  service: 1,
+  pieces: 15,
+  special_instructions: "Handle with care",
+  pickup_date: "2025-01-20",
+  delivery_date: "2025-01-22"
+};
+
+fetch("http://127.0.0.1:8000/orders/api/", {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_JWT_TOKEN'
+  },
+  body: JSON.stringify(orderData)
+})
+.then(response => response.json())
+.then(order => {
+  console.log('Order created:', order);
+});</div>
+
+                                    <div id="orders-create-csharp" class="code-block" style="display: none;">
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+
+var orderData = new {
+    customer = 1,
+    service = 1,
+    pieces = 15,
+    special_instructions = "Handle with care",
+    pickup_date = "2025-01-20",
+    delivery_date = "2025-01-22"
+};
+
+var json = JsonSerializer.Serialize(orderData);
+var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+var response = await client.PostAsync("http://127.0.0.1:8000/orders/api/", content);
+var result = await response.Content.ReadAsStringAsync();</div>
+
+                                    <div id="orders-create-go" class="code-block" style="display: none;">
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+    "fmt"
+)
+
+type Order struct {
+    Customer            int    `json:"customer"`
+    Service            int    `json:"service"`
+    Pieces             int    `json:"pieces"`
+    SpecialInstructions string `json:"special_instructions"`
+    PickupDate         string `json:"pickup_date"`
+    DeliveryDate       string `json:"delivery_date"`
+}
+
+func main() {
+    order := Order{
+        Customer:            1,
+        Service:            1,
+        Pieces:             15,
+        SpecialInstructions: "Handle with care",
+        PickupDate:         "2025-01-20",
+        DeliveryDate:       "2025-01-22",
+    }
+    
+    jsonData, _ := json.Marshal(order)
+    
+    client := &http.Client{}
+    req, _ := http.NewRequest("POST", "http://127.0.0.1:8000/orders/api/", 
+        bytes.NewBuffer(jsonData))
+    
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+}</div>
+                                </div>
+                            </div>
+
+                            <div class="endpoint-header">
+                                <h4>
+                                    <span class="method get">GET</span>
+                                    <code>/orders/api/stats/</code>
+                                </h4>
+                                <p>Get order statistics and analytics.</p>
+
+                                <div class="response-example">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Response Example:</h6>
+                                    <div class="code-block">
+{
+  "total_orders": 1250,
+  "pending_orders": 45,
+  "completed_orders": 1180,
+  "total_revenue": "125000.00",
+  "monthly_revenue": "15000.00"
+}</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Error Handling Section -->
+                        <section id="error-handling" class="endpoint-section">
+                            <h2><i class="fas fa-exclamation-triangle me-2"></i>Error Handling - What to Do When Things Go Wrong</h2>
+                            <p>
+                                Don't worry! Every developer encounters errors when working with APIs. Here's your complete 
+                                guide to understanding and fixing common issues.
+                            </p>
+
+                            <div class="auth-info">
+                                <h5><i class="fas fa-traffic-light me-2"></i>HTTP Status Codes Explained (Like Traffic Lights)</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">🟢 Success Codes (Everything's Good!)</h6>
+                                        <ul>
+                                            <li><strong>200 OK</strong> - Request successful, here's your data</li>
+                                            <li><strong>201 Created</strong> - New item created successfully</li>
+                                            <li><strong>204 No Content</strong> - Action completed, no data to return</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning">🟡 Client Error Codes (Check Your Request)</h6>
+                                        <ul>
+                                            <li><strong>400 Bad Request</strong> - Your data has problems</li>
+                                            <li><strong>401 Unauthorized</strong> - Missing or invalid token</li>
+                                            <li><strong>403 Forbidden</strong> - Not allowed to do this</li>
+                                            <li><strong>404 Not Found</strong> - That item doesn't exist</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-12">
+                                        <h6 class="text-danger">🔴 Server Error Codes (Our Problem, Not Yours)</h6>
+                                        <ul class="mb-0">
+                                            <li><strong>500 Internal Server Error</strong> - Something broke on our end</li>
+                                            <li><strong>502 Bad Gateway</strong> - Server temporarily unavailable</li>
+                                            <li><strong>503 Service Unavailable</strong> - Server is down for maintenance</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="response-example">
+                                <h5><i class="fas fa-tools me-2"></i>Troubleshooting Guide</h5>
+                                
+                                <h6>🔍 Problem: Getting 401 Unauthorized</h6>
+                                <p><strong>What it means:</strong> Your token is missing, expired, or invalid</p>
+                                <p><strong>How to fix:</strong></p>
+                                <ol>
+                                    <li>Check your Authorization header: <code>Authorization: Bearer YOUR_TOKEN</code></li>
+                                    <li>Make sure there's a space between "Bearer" and your token</li>
+                                    <li>Verify your token hasn't expired (they last 24 hours)</li>
+                                    <li>Contact support if you need a new token</li>
+                                </ol>
+
+                                <h6>🔍 Problem: Getting 400 Bad Request</h6>
+                                <p><strong>What it means:</strong> The data you sent has validation errors</p>
+                                <p><strong>How to fix:</strong> Look at the error response for specific field issues</p>
+                                <div class="code-block">
+{
+  "name": ["This field is required."],
+  "phone": ["Customer with this phone number already exists."],
+  "email": ["Enter a valid email address."]
+}
+</div>
+
+                                <h6>🔍 Problem: Getting 404 Not Found</h6>
+                                <p><strong>What it means:</strong> The URL or resource doesn't exist</p>
+                                <p><strong>How to fix:</strong></p>
+                                <ol>
+                                    <li>Double-check the URL (typos are common!)</li>
+                                    <li>Verify the customer/order ID exists</li>
+                                    <li>Make sure you're using the correct base URL</li>
+                                </ol>
+                            </div>
+
+                            <div class="auth-info">
+                                <h5><i class="fas fa-code me-2"></i>Error Response Format (What You'll Receive)</h5>
+                                <p>All error responses follow this standard format:</p>
+                                <div class="code-block">
+{
+  "error": {
+    "code": "VALIDATION_ERROR",           // Error type identifier
+    "message": "Invalid input data",      // Human-readable description
+    "details": {                          // Specific field errors
+      "phone": ["This field is required."],
+      "email": ["Enter a valid email address."]
+    }
+  },
+  "timestamp": "2025-01-29T10:30:00Z",   // When the error occurred
+  "path": "/customers/api/"               // Which endpoint had the error
+}</div>
+                            </div>
+
+                            <div class="response-example">
+                                <h5><i class="fas fa-lightbulb me-2"></i>Pro Tips for Debugging</h5>
+                                <ul>
+                                    <li><strong>Start simple:</strong> Test with minimal data first, then add complexity</li>
+                                    <li><strong>Check the logs:</strong> Copy the exact error message when asking for help</li>
+                                    <li><strong>Use Postman or curl:</strong> Test endpoints manually before writing code</li>
+                                    <li><strong>Read the response:</strong> Error messages usually tell you exactly what's wrong</li>
+                                    <li><strong>Check your JSON:</strong> Use a JSON validator to ensure your data is correctly formatted</li>
+                                </ul>
+                            </div>
+
+                            <div class="auth-info">
+                                <h6><i class="fas fa-question-circle me-2"></i>Still Stuck? Here's How to Get Help</h6>
+                                <ol class="mb-0">
+                                    <li>Copy the exact error message and HTTP status code</li>
+                                    <li>Include the request you sent (without your token!)</li>
+                                    <li>Mention what you were trying to accomplish</li>
+                                    <li>Contact our support team with these details</li>
+                                </ol>
+                            </div>
+                        </section>
+
+                        <div class="text-center mt-5">
+                            <a href="/dashboard/" class="btn btn-outline-primary me-3">
+                                <i class="fas fa-home me-2"></i>Back to Dashboard
+                            </a>
+                            <a href="/admin/" class="btn btn-outline-secondary">
+                                <i class="fas fa-cog me-2"></i>Admin Panel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showCode(section, language) {
+            // Hide all code blocks for this section
+            const codeBlocks = document.querySelectorAll(`[id^="${section}-"]`);
+            codeBlocks.forEach(block => block.style.display = 'none');
+            
+            // Show the selected language
+            const selectedBlock = document.getElementById(`${section}-${language}`);
+            if (selectedBlock) {
+                selectedBlock.style.display = 'block';
+            }
+            
+            // Update tab states
+            const tabs = document.querySelectorAll(`[onclick*="${section}"]`);
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

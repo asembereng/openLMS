@@ -14,7 +14,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from .models import ServiceCategory, Service, ServicePriceHistory
 from .serializers import (
@@ -279,6 +280,403 @@ class ServiceCategoryRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 
 
 # API Views - Services
+@extend_schema(
+    tags=['services'],
+    summary='List and Create Services',
+    description='Retrieve available laundry services with pricing or create new service types.',
+    parameters=[
+        OpenApiParameter(
+            name='category',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Filter by service category ID'
+        ),
+        OpenApiParameter(
+            name='is_active',
+            type=OpenApiTypes.BOOL,
+            location=OpenApiParameter.QUERY,
+            description='Filter by active status'
+        ),
+        OpenApiParameter(
+            name='search',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Search services by name, description, or category'
+        ),
+    ],
+    examples=[
+        OpenApiExample(
+            'Services List Response',
+            summary='Available laundry services with pricing',
+            description='Complete service catalog with categories and pricing information',
+            value={
+                "count": 15,
+                "results": [
+                    {
+                        "id": 1,
+                        "name": "Dry Cleaning",
+                        "description": "Professional dry cleaning service for delicate fabrics",
+                        "category": {
+                            "id": 1,
+                            "name": "Cleaning Services",
+                            "description": "Basic cleaning operations"
+                        },
+                        "price_per_dozen": "120.00",
+                        "unit_price": "10.00",
+                        "is_active": True,
+                        "estimated_duration_hours": 24,
+                        "special_instructions": "Handle with care",
+                        "created_at": "2024-12-01T08:00:00Z"
+                    },
+                    {
+                        "id": 2,
+                        "name": "Wash & Iron",
+                        "description": "Standard washing and ironing service",
+                        "category": {
+                            "id": 1,
+                            "name": "Cleaning Services"
+                        },
+                        "price_per_dozen": "60.00",
+                        "unit_price": "5.00",
+                        "is_active": True,
+                        "estimated_duration_hours": 12
+                    }
+                ]
+            },
+            response_only=True,
+        ),
+        OpenApiExample(
+            'Create Service Request',
+            summary='Create new service type',
+            description='Add a new laundry service with pricing and category',
+            value={
+                "name": "Premium Starch",
+                "description": "Heavy starch treatment for formal wear",
+                "category": 2,
+                "price_per_dozen": "180.00",
+                "estimated_duration_hours": 48,
+                "special_instructions": "Use premium starch only",
+                "is_active": True
+            },
+            request_only=True,
+        ),
+    ],
+    extensions={
+        'x-code-samples': [
+            {
+                'lang': 'curl',
+                'label': 'cURL - List Services',
+                'source': '''curl -X GET "http://127.0.0.1:8000/services/api/?category=1&is_active=true" \\
+  -H "Accept: application/json"'''
+            },
+            {
+                'lang': 'curl',
+                'label': 'cURL - Create Service',
+                'source': '''curl -X POST "http://127.0.0.1:8000/services/api/" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
+  -d '{
+    "name": "Premium Starch",
+    "description": "Heavy starch treatment for formal wear",
+    "category": 2,
+    "price_per_dozen": "180.00",
+    "estimated_duration_hours": 48
+  }'
+'''
+            },
+            {
+                'lang': 'python',
+                'label': 'Python (requests)',
+                'source': '''import requests
+
+# List services
+url = "http://127.0.0.1:8000/services/api/"
+params = {
+    "category": 1,
+    "is_active": True
+}
+
+response = requests.get(url, params=params)
+services = response.json()
+
+print(f"Found {services['count']} services")
+for service in services['results']:
+    unit_price = float(service['price_per_dozen']) / 12
+    print(f"{service['name']}: ${unit_price:.2f} per piece")
+
+# Create new service
+new_service = {
+    "name": "Premium Starch",
+    "description": "Heavy starch treatment for formal wear",
+    "category": 2,
+    "price_per_dozen": "180.00",
+    "estimated_duration_hours": 48
+}
+
+headers = {"Authorization": "Bearer YOUR_JWT_TOKEN"}
+create_response = requests.post(url, json=new_service, headers=headers)
+
+if create_response.status_code == 201:
+    print("Service created successfully")'''
+            },
+            {
+                'lang': 'javascript',
+                'label': 'JavaScript (fetch)',
+                'source': '''// List services by category
+fetch('http://127.0.0.1:8000/services/api/?category=1&is_active=true')
+  .then(response => response.json())
+  .then(data => {
+    console.log(`Found ${data.count} services`);
+    
+    data.results.forEach(service => {
+      const unitPrice = parseFloat(service.price_per_dozen) / 12;
+      console.log(`${service.name}: $${unitPrice.toFixed(2)} per piece`);
+      console.log(`  Category: ${service.category.name}`);
+      console.log(`  Duration: ${service.estimated_duration_hours} hours`);
+    });
+  });
+
+// Create new service
+const newService = {
+  name: "Premium Starch",
+  description: "Heavy starch treatment for formal wear",
+  category: 2,
+  price_per_dozen: "180.00",
+  estimated_duration_hours: 48,
+  is_active: true
+};
+
+fetch('http://127.0.0.1:8000/services/api/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_JWT_TOKEN'
+  },
+  body: JSON.stringify(newService)
+})
+.then(response => response.json())
+.then(service => {
+  console.log(`Created service: ${service.name}`);
+  console.log(`Service ID: ${service.id}`);
+});'''
+            },
+            {
+                'lang': 'php',
+                'label': 'PHP',
+                'source': '''<?php
+// List services
+$url = "http://127.0.0.1:8000/services/api/?category=1&is_active=true";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+
+$response = curl_exec($ch);
+$services = json_decode($response, true);
+
+echo "Found " . $services['count'] . " services\\n";
+
+foreach ($services['results'] as $service) {
+    $unitPrice = floatval($service['price_per_dozen']) / 12;
+    echo $service['name'] . ": $" . number_format($unitPrice, 2) . " per piece\\n";
+    echo "  Category: " . $service['category']['name'] . "\\n";
+    echo "  Duration: " . $service['estimated_duration_hours'] . " hours\\n\\n";
+}
+
+// Create new service
+$newService = array(
+    'name' => 'Premium Starch',
+    'description' => 'Heavy starch treatment for formal wear',
+    'category' => 2,
+    'price_per_dozen' => '180.00',
+    'estimated_duration_hours' => 48,
+    'is_active' => true
+);
+
+curl_setopt($ch, CURLOPT_URL, "http://127.0.0.1:8000/services/api/");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($newService));
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type: application/json',
+    'Authorization: Bearer YOUR_JWT_TOKEN'
+));
+
+$createResponse = curl_exec($ch);
+$createdService = json_decode($createResponse, true);
+
+echo "Created service: " . $createdService['name'] . "\\n";
+curl_close($ch);
+?>'''
+            },
+            {
+                'lang': 'csharp',
+                'label': 'C#',
+                'source': '''using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+
+public class ServiceCategory
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+}
+
+public class LaundryService
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public ServiceCategory Category { get; set; }
+    public decimal PricePerDozen { get; set; }
+    public decimal UnitPrice { get; set; }
+    public bool IsActive { get; set; }
+    public int EstimatedDurationHours { get; set; }
+}
+
+public class CreateServiceRequest
+{
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public int Category { get; set; }
+    public decimal PricePerDozen { get; set; }
+    public int EstimatedDurationHours { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+var client = new HttpClient();
+
+// List services
+var response = await client.GetAsync(
+    "http://127.0.0.1:8000/services/api/?category=1&is_active=true"
+);
+
+if (response.IsSuccessStatusCode)
+{
+    var content = await response.Content.ReadAsStringAsync();
+    var servicesData = JsonSerializer.Deserialize<dynamic>(content);
+    Console.WriteLine("Services retrieved successfully");
+}
+
+// Create new service
+var newService = new CreateServiceRequest
+{
+    Name = "Premium Starch",
+    Description = "Heavy starch treatment for formal wear",
+    Category = 2,
+    PricePerDozen = 180.00m,
+    EstimatedDurationHours = 48
+};
+
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+var json = JsonSerializer.Serialize(newService);
+var createContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+var createResponse = await client.PostAsync(
+    "http://127.0.0.1:8000/services/api/", createContent
+);
+
+if (createResponse.IsSuccessStatusCode)
+{
+    Console.WriteLine("Service created successfully");
+}'''
+            },
+            {
+                'lang': 'go',
+                'label': 'Go',
+                'source': '''package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "io/ioutil"
+)
+
+type ServiceCategory struct {
+    ID          int    `json:"id"`
+    Name        string `json:"name"`
+    Description string `json:"description"`
+}
+
+type LaundryService struct {
+    ID                      int             `json:"id"`
+    Name                    string          `json:"name"`
+    Description             string          `json:"description"`
+    Category                ServiceCategory `json:"category"`
+    PricePerDozen          string          `json:"price_per_dozen"`
+    UnitPrice              string          `json:"unit_price"`
+    IsActive               bool            `json:"is_active"`
+    EstimatedDurationHours int             `json:"estimated_duration_hours"`
+}
+
+type CreateServiceRequest struct {
+    Name                    string `json:"name"`
+    Description             string `json:"description"`
+    Category                int    `json:"category"`
+    PricePerDozen          string `json:"price_per_dozen"`
+    EstimatedDurationHours  int    `json:"estimated_duration_hours"`
+    IsActive               bool   `json:"is_active"`
+}
+
+type ServicesResponse struct {
+    Count   int              `json:"count"`
+    Results []LaundryService `json:"results"`
+}
+
+func main() {
+    client := &http.Client{}
+    
+    // List services
+    req, _ := http.NewRequest("GET", 
+        "http://127.0.0.1:8000/services/api/?category=1&is_active=true", nil)
+    req.Header.Add("Accept", "application/json")
+    
+    resp, _ := client.Do(req)
+    body, _ := ioutil.ReadAll(resp.Body)
+    resp.Body.Close()
+    
+    var services ServicesResponse
+    json.Unmarshal(body, &services)
+    
+    fmt.Printf("Found %d services\\n", services.Count)
+    for _, service := range services.Results {
+        fmt.Printf("%s: %s per dozen\\n", service.Name, service.PricePerDozen)
+        fmt.Printf("  Category: %s\\n", service.Category.Name)
+        fmt.Printf("  Duration: %d hours\\n\\n", service.EstimatedDurationHours)
+    }
+    
+    // Create new service
+    newService := CreateServiceRequest{
+        Name:                   "Premium Starch",
+        Description:            "Heavy starch treatment for formal wear",
+        Category:               2,
+        PricePerDozen:         "180.00",
+        EstimatedDurationHours: 48,
+        IsActive:              true,
+    }
+    
+    jsonData, _ := json.Marshal(newService)
+    
+    createReq, _ := http.NewRequest("POST", 
+        "http://127.0.0.1:8000/services/api/", bytes.NewBuffer(jsonData))
+    createReq.Header.Set("Content-Type", "application/json")
+    createReq.Header.Set("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    createResp, _ := client.Do(createReq)
+    defer createResp.Body.Close()
+    
+    if createResp.StatusCode == 201 {
+        fmt.Println("Service created successfully")
+    }
+}'''
+            }
+        ]
+    }
+)
 class ServiceListCreateAPIView(generics.ListCreateAPIView):
     """API view for listing and creating services"""
     queryset = Service.objects.all()

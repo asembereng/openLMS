@@ -15,6 +15,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from .models import Order, OrderLine, OrderStatusHistory, Receipt
 from .serializers import (
@@ -726,6 +728,398 @@ def generate_whatsapp_share_with_attachment(request, pk):
 
 
 # API Views
+@extend_schema(
+    tags=['orders'],
+    summary='List and Create Orders',
+    description='Retrieve orders with filtering and pagination, or create new laundry orders.',
+    parameters=[
+        OpenApiParameter(
+            name='status',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Filter by order status: pending, in_progress, ready, completed, cancelled'
+        ),
+        OpenApiParameter(
+            name='customer',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Filter by customer ID'
+        ),
+        OpenApiParameter(
+            name='search',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Search by order number, customer name, or phone'
+        ),
+    ],
+    examples=[
+        OpenApiExample(
+            'Order List Response',
+            summary='Paginated order list with details',
+            description='List of orders with customer and service information',
+            value={
+                "count": 45,
+                "next": "http://127.0.0.1:8000/orders/api/?page=2",
+                "previous": None,
+                "results": [
+                    {
+                        "id": 1,
+                        "order_number": "ORD-20250129-001",
+                        "customer": {
+                            "id": 1,
+                            "name": "John Doe",
+                            "phone": "+234-800-123-4567"
+                        },
+                        "status": "pending",
+                        "total_amount": "120.00",
+                        "created_at": "2025-01-29T10:30:00Z",
+                        "expected_completion": "2025-01-31T16:00:00Z",
+                        "lines": [
+                            {
+                                "service": "Dry Cleaning",
+                                "pieces": 5,
+                                "unit_price": "10.00",
+                                "total_price": "50.00"
+                            }
+                        ]
+                    }
+                ]
+            },
+            response_only=True,
+        ),
+        OpenApiExample(
+            'Create Order Request',
+            summary='Create new laundry order',
+            description='Order creation with customer, services, and delivery details',
+            value={
+                "customer": 1,
+                "lines": [
+                    {
+                        "service": 1,
+                        "pieces": 5,
+                        "special_instructions": "Handle with care"
+                    }
+                ],
+                "pickup_date": "2025-01-30",
+                "delivery_date": "2025-02-01",
+                "special_instructions": "Customer prefers pickup after 5 PM"
+            },
+            request_only=True,
+        ),
+    ],
+    extensions={
+        'x-code-samples': [
+            {
+                'lang': 'curl',
+                'label': 'cURL - List Orders',
+                'source': '''curl -X GET "http://127.0.0.1:8000/orders/api/?status=pending&customer=1" \\
+  -H "Accept: application/json" \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"'''
+            },
+            {
+                'lang': 'curl',
+                'label': 'cURL - Create Order',
+                'source': '''curl -X POST "http://127.0.0.1:8000/orders/api/" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
+  -d '{
+    "customer": 1,
+    "lines": [
+      {
+        "service": 1,
+        "pieces": 5,
+        "special_instructions": "Handle with care"
+      }
+    ],
+    "pickup_date": "2025-01-30",
+    "delivery_date": "2025-02-01"
+  }'
+'''
+            },
+            {
+                'lang': 'python',
+                'label': 'Python (requests)',
+                'source': '''import requests
+from datetime import datetime, timedelta
+
+# List orders
+url = "http://127.0.0.1:8000/orders/api/"
+headers = {
+    "Accept": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+}
+params = {
+    "status": "pending",
+    "customer": 1
+}
+
+response = requests.get(url, headers=headers, params=params)
+orders = response.json()
+print(f"Found {orders['count']} orders")
+
+# Create new order
+order_data = {
+    "customer": 1,
+    "lines": [
+        {
+            "service": 1,
+            "pieces": 5,
+            "special_instructions": "Handle with care"
+        }
+    ],
+    "pickup_date": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+    "delivery_date": (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
+}
+
+create_response = requests.post(url, headers=headers, json=order_data)
+new_order = create_response.json()
+print(f"Created order: {new_order['order_number']}")'''
+            },
+            {
+                'lang': 'javascript',
+                'label': 'JavaScript (fetch)',
+                'source': '''// List orders
+const listUrl = "http://127.0.0.1:8000/orders/api/?status=pending";
+
+fetch(listUrl, {
+  method: 'GET',
+  headers: {
+    'Accept': 'application/json',
+    'Authorization': 'Bearer YOUR_JWT_TOKEN'
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log(`Found ${data.count} orders`);
+  data.results.forEach(order => {
+    console.log(`Order: ${order.order_number} - ${order.status}`);
+  });
+});
+
+// Create new order
+const orderData = {
+  customer: 1,
+  lines: [
+    {
+      service: 1,
+      pieces: 5,
+      special_instructions: "Handle with care"
+    }
+  ],
+  pickup_date: "2025-01-30",
+  delivery_date: "2025-02-01"
+};
+
+fetch("http://127.0.0.1:8000/orders/api/", {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_JWT_TOKEN'
+  },
+  body: JSON.stringify(orderData)
+})
+.then(response => response.json())
+.then(order => {
+  console.log(`Created order: ${order.order_number}`);
+});'''
+            },
+            {
+                'lang': 'php',
+                'label': 'PHP',
+                'source': '''<?php
+// List orders
+$url = "http://127.0.0.1:8000/orders/api/?status=pending&customer=1";
+
+$headers = array(
+    'Accept: application/json',
+    'Authorization: Bearer YOUR_JWT_TOKEN'
+);
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$orders = json_decode($response, true);
+
+echo "Found " . $orders['count'] . " orders\\n";
+
+// Create new order
+$orderData = array(
+    'customer' => 1,
+    'lines' => array(
+        array(
+            'service' => 1,
+            'pieces' => 5,
+            'special_instructions' => 'Handle with care'
+        )
+    ),
+    'pickup_date' => date('Y-m-d', strtotime('+1 day')),
+    'delivery_date' => date('Y-m-d', strtotime('+3 days'))
+);
+
+curl_setopt($ch, CURLOPT_URL, "http://127.0.0.1:8000/orders/api/");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($orderData));
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type: application/json',
+    'Authorization: Bearer YOUR_JWT_TOKEN'
+));
+
+$createResponse = curl_exec($ch);
+$newOrder = json_decode($createResponse, true);
+
+echo "Created order: " . $newOrder['order_number'] . "\\n";
+curl_close($ch);
+?>'''
+            },
+            {
+                'lang': 'csharp',
+                'label': 'C#',
+                'source': '''using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+
+public class OrderLine
+{
+    public int Service { get; set; }
+    public int Pieces { get; set; }
+    public string SpecialInstructions { get; set; }
+}
+
+public class CreateOrderRequest
+{
+    public int Customer { get; set; }
+    public List<OrderLine> Lines { get; set; }
+    public string PickupDate { get; set; }
+    public string DeliveryDate { get; set; }
+}
+
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+// List orders
+var listResponse = await client.GetAsync(
+    "http://127.0.0.1:8000/orders/api/?status=pending"
+);
+
+if (listResponse.IsSuccessStatusCode)
+{
+    var content = await listResponse.Content.ReadAsStringAsync();
+    var ordersData = JsonSerializer.Deserialize<dynamic>(content);
+    Console.WriteLine($"Found orders");
+}
+
+// Create new order
+var orderRequest = new CreateOrderRequest
+{
+    Customer = 1,
+    Lines = new List<OrderLine>
+    {
+        new OrderLine
+        {
+            Service = 1,
+            Pieces = 5,
+            SpecialInstructions = "Handle with care"
+        }
+    },
+    PickupDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"),
+    DeliveryDate = DateTime.Now.AddDays(3).ToString("yyyy-MM-dd")
+};
+
+var json = JsonSerializer.Serialize(orderRequest);
+var createContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+var createResponse = await client.PostAsync(
+    "http://127.0.0.1:8000/orders/api/", createContent
+);
+
+if (createResponse.IsSuccessStatusCode)
+{
+    var newOrderContent = await createResponse.Content.ReadAsStringAsync();
+    Console.WriteLine("Order created successfully");
+}'''
+            },
+            {
+                'lang': 'go',
+                'label': 'Go',
+                'source': '''package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "io/ioutil"
+    "time"
+)
+
+type OrderLine struct {
+    Service             int    `json:"service"`
+    Pieces              int    `json:"pieces"`
+    SpecialInstructions string `json:"special_instructions,omitempty"`
+}
+
+type CreateOrderRequest struct {
+    Customer     int         `json:"customer"`
+    Lines        []OrderLine `json:"lines"`
+    PickupDate   string      `json:"pickup_date"`
+    DeliveryDate string      `json:"delivery_date"`
+}
+
+type OrderResponse struct {
+    Count   int `json:"count"`
+    Results []map[string]interface{} `json:"results"`
+}
+
+func main() {
+    client := &http.Client{}
+    
+    // List orders
+    req, _ := http.NewRequest("GET", 
+        "http://127.0.0.1:8000/orders/api/?status=pending", nil)
+    req.Header.Add("Accept", "application/json")
+    req.Header.Add("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    resp, _ := client.Do(req)
+    body, _ := ioutil.ReadAll(resp.Body)
+    resp.Body.Close()
+    
+    var orders OrderResponse
+    json.Unmarshal(body, &orders)
+    fmt.Printf("Found %d orders\\n", orders.Count)
+    
+    // Create new order
+    orderRequest := CreateOrderRequest{
+        Customer: 1,
+        Lines: []OrderLine{
+            {
+                Service: 1,
+                Pieces:  5,
+                SpecialInstructions: "Handle with care",
+            },
+        },
+        PickupDate:   time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
+        DeliveryDate: time.Now().AddDate(0, 0, 3).Format("2006-01-02"),
+    }
+    
+    jsonData, _ := json.Marshal(orderRequest)
+    
+    createReq, _ := http.NewRequest("POST", 
+        "http://127.0.0.1:8000/orders/api/", bytes.NewBuffer(jsonData))
+    createReq.Header.Set("Content-Type", "application/json")
+    createReq.Header.Set("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    createResp, _ := client.Do(createReq)
+    defer createResp.Body.Close()
+    
+    fmt.Println("Order creation request sent")
+}'''
+            }
+        ]
+    }
+)
 class OrderListCreateAPIView(generics.ListCreateAPIView):
     """API view for listing and creating orders"""
     queryset = Order.objects.all()
@@ -769,6 +1163,223 @@ class OrderUpdateStatusAPIView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
 
+@extend_schema(
+    tags=['orders'],
+    summary='Order Statistics and Analytics',
+    description='Get comprehensive order analytics including revenue, status distribution, and trends.',
+    examples=[
+        OpenApiExample(
+            'Order Statistics Response',
+            summary='Complete order analytics dashboard data',
+            description='Business intelligence data for order management and revenue tracking',
+            value={
+                "total_orders": 1250,
+                "pending_orders": 45,
+                "ready_orders": 15,
+                "completed_orders": 1180,
+                "cancelled_orders": 10,
+                "today_orders": 8,
+                "today_revenue": "850.00",
+                "monthly_revenue": "15000.00",
+                "monthly_orders": 125,
+                "monthly_growth": 12.5,
+                "average_order_value": "120.00"
+            },
+            response_only=True,
+        ),
+    ],
+    extensions={
+        'x-code-samples': [
+            {
+                'lang': 'curl',
+                'label': 'cURL',
+                'source': '''curl -X GET "http://127.0.0.1:8000/orders/api/stats/" \\
+  -H "Accept: application/json" \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"'''
+            },
+            {
+                'lang': 'python',
+                'label': 'Python (requests)',
+                'source': '''import requests
+
+url = "http://127.0.0.1:8000/orders/api/stats/"
+headers = {
+    "Accept": "application/json",
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+}
+
+response = requests.get(url, headers=headers)
+stats = response.json()
+
+print("Order Statistics:")
+print(f"Total Orders: {stats['total_orders']}")
+print(f"Pending: {stats['pending_orders']}")
+print(f"Today's Revenue: ${stats['today_revenue']}")
+print(f"Monthly Revenue: ${stats['monthly_revenue']}")
+print(f"Monthly Growth: {stats.get('monthly_growth', 0)}%")'''
+            },
+            {
+                'lang': 'javascript',
+                'label': 'JavaScript (fetch)',
+                'source': '''fetch('http://127.0.0.1:8000/orders/api/stats/', {
+  method: 'GET',
+  headers: {
+    'Accept': 'application/json',
+    'Authorization': 'Bearer YOUR_JWT_TOKEN'
+  }
+})
+.then(response => response.json())
+.then(stats => {
+  console.log('Order Analytics:');
+  console.log(`Total Orders: ${stats.total_orders}`);
+  console.log(`Pending: ${stats.pending_orders}`);
+  console.log(`Ready: ${stats.ready_orders}`);
+  console.log(`Today's Revenue: $${stats.today_revenue}`);
+  console.log(`Monthly Revenue: $${stats.monthly_revenue}`);
+  
+  // Display status distribution
+  const statusData = {
+    pending: stats.pending_orders,
+    ready: stats.ready_orders,
+    completed: stats.completed_orders
+  };
+  
+  console.log('Status Distribution:', statusData);
+});'''
+            },
+            {
+                'lang': 'php',
+                'label': 'PHP',
+                'source': '''<?php
+$url = "http://127.0.0.1:8000/orders/api/stats/";
+
+$headers = array(
+    'Accept: application/json',
+    'Authorization: Bearer YOUR_JWT_TOKEN'
+);
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$stats = json_decode($response, true);
+
+echo "Order Statistics:\\n";
+echo "Total Orders: " . $stats['total_orders'] . "\\n";
+echo "Pending: " . $stats['pending_orders'] . "\\n";
+echo "Ready: " . $stats['ready_orders'] . "\\n";
+echo "Today's Revenue: $" . $stats['today_revenue'] . "\\n";
+echo "Monthly Revenue: $" . $stats['monthly_revenue'] . "\\n";
+
+if (isset($stats['monthly_growth'])) {
+    echo "Monthly Growth: " . $stats['monthly_growth'] . "%\\n";
+}
+
+curl_close($ch);
+?>'''
+            },
+            {
+                'lang': 'csharp',
+                'label': 'C#',
+                'source': '''using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+
+public class OrderStats
+{
+    public int TotalOrders { get; set; }
+    public int PendingOrders { get; set; }
+    public int ReadyOrders { get; set; }
+    public int CompletedOrders { get; set; }
+    public int TodayOrders { get; set; }
+    public decimal TodayRevenue { get; set; }
+    public decimal MonthlyRevenue { get; set; }
+    public int MonthlyOrders { get; set; }
+    public decimal? MonthlyGrowth { get; set; }
+    public decimal AverageOrderValue { get; set; }
+}
+
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+var response = await client.GetAsync("http://127.0.0.1:8000/orders/api/stats/");
+
+if (response.IsSuccessStatusCode)
+{
+    var content = await response.Content.ReadAsStringAsync();
+    var stats = JsonConvert.DeserializeObject<OrderStats>(content);
+    
+    Console.WriteLine("Order Statistics:");
+    Console.WriteLine($"Total Orders: {stats.TotalOrders}");
+    Console.WriteLine($"Pending: {stats.PendingOrders}");
+    Console.WriteLine($"Ready: {stats.ReadyOrders}");
+    Console.WriteLine($"Today's Revenue: ${stats.TodayRevenue}");
+    Console.WriteLine($"Monthly Revenue: ${stats.MonthlyRevenue}");
+    
+    if (stats.MonthlyGrowth.HasValue)
+    {
+        Console.WriteLine($"Monthly Growth: {stats.MonthlyGrowth}%");
+    }
+}'''
+            },
+            {
+                'lang': 'go',
+                'label': 'Go',
+                'source': '''package main
+
+import (
+    "fmt"
+    "net/http"
+    "io/ioutil"
+    "encoding/json"
+)
+
+type OrderStats struct {
+    TotalOrders       int     `json:"total_orders"`
+    PendingOrders     int     `json:"pending_orders"`
+    ReadyOrders       int     `json:"ready_orders"`
+    CompletedOrders   int     `json:"completed_orders"`
+    TodayOrders       int     `json:"today_orders"`
+    TodayRevenue      string  `json:"today_revenue"`
+    MonthlyRevenue    string  `json:"monthly_revenue"`
+    MonthlyOrders     int     `json:"monthly_orders"`
+    MonthlyGrowth     *float64 `json:"monthly_growth"`
+    AverageOrderValue string  `json:"average_order_value"`
+}
+
+func main() {
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", 
+        "http://127.0.0.1:8000/orders/api/stats/", nil)
+    
+    req.Header.Add("Accept", "application/json")
+    req.Header.Add("Authorization", "Bearer YOUR_JWT_TOKEN")
+    
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    
+    body, _ := ioutil.ReadAll(resp.Body)
+    
+    var stats OrderStats
+    json.Unmarshal(body, &stats)
+    
+    fmt.Printf("Order Statistics:\\n")
+    fmt.Printf("Total Orders: %d\\n", stats.TotalOrders)
+    fmt.Printf("Pending: %d\\n", stats.PendingOrders)
+    fmt.Printf("Ready: %d\\n", stats.ReadyOrders)
+    fmt.Printf("Today's Revenue: $%s\\n", stats.TodayRevenue)
+    fmt.Printf("Monthly Revenue: $%s\\n", stats.MonthlyRevenue)
+    
+    if stats.MonthlyGrowth != nil {
+        fmt.Printf("Monthly Growth: %.1f%%\\n", *stats.MonthlyGrowth)
+    }
+}'''
+            }
+        ]
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def order_stats_api(request):

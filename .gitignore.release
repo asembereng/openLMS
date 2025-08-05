@@ -1,0 +1,53 @@
+# Production Release Setup for GitHub
+# .env file for production configuration
+.env.production
+
+# Release artifacts
+*.tar.gz
+*.zip
+release/
+
+# Coverage reports for release validation
+.coverage
+htmlcov/
+coverage.xml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs for release validation
+*.log
+logs/
+
+# Database files (not for production)
+db.sqlite3
+db.sqlite3-journal
+
+# Media files (not for git)
+media/
+staticfiles/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Backup files
+*.bak
+*.backup

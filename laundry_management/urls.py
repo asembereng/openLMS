@@ -7,9 +7,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from django.http import JsonResponse
 from .search_views import global_search_api
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 def health_check(request):
     """Health check endpoint for load balancers"""
@@ -39,7 +40,10 @@ urlpatterns = [
     path('api/global-search/', global_search_api, name='global_search_api'),
     
     # API Documentation
-    # path('api/schema/', include('drf_spectacular.urls')),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('api/', TemplateView.as_view(template_name='api_docs_portal.html'), name='api_portal'),
     
     # App URLs
     path('customers/', include('customers.urls')),

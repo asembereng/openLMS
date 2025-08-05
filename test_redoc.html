@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ReDoc Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h1>Testing ReDoc Loading</h1>
+    <div id="redoc-container"></div>
+    
+    <script>
+        console.log("Starting ReDoc test...");
+        
+        // Test if we can fetch the schema
+        fetch('http://127.0.0.1:8000/api/schema/')
+            .then(response => {
+                console.log("Schema response status:", response.status);
+                return response.text();
+            })
+            .then(data => {
+                console.log("Schema data length:", data.length);
+                console.log("Schema preview:", data.substring(0, 200));
+            })
+            .catch(error => {
+                console.error("Schema fetch error:", error);
+            });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"></script>
+    <script>
+        console.log("ReDoc script loaded");
+        
+        if (typeof Redoc !== 'undefined') {
+            console.log("Redoc object exists:", Redoc);
+            
+            try {
+                Redoc.init("http://127.0.0.1:8000/api/schema/", {
+                    hideDownloadButton: false,
+                    hideHostname: false,
+                    hideLoading: false,
+                    expandResponses: "200,201"
+                }, document.getElementById('redoc-container'));
+                console.log("ReDoc initialized successfully");
+            } catch (error) {
+                console.error("ReDoc initialization error:", error);
+            }
+        } else {
+            console.error("ReDoc object not found!");
+        }
+    </script>
+</body>
+</html>
