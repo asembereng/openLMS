@@ -20,25 +20,35 @@ REPO_URL="https://github.com/asembereng/openLMS.git"
 APP_DIR="/opt/openlms"
 DOCKER_COMPOSE_FILE="docker-compose.production.yml"
 BACKUP_DIR="/opt/backups/openlms"
-LOG_FILE="/var/log/openlms-deploy.log"
 HOSTNAME="af.proxysolutions.io"
+
+# Create logs directory in project folder instead of /var/log
+LOGS_DIR="./logs"
+mkdir -p "$LOGS_DIR"
+LOG_FILE="$LOGS_DIR/deploy.log"
+
+# Ensure log file is writable
+touch "$LOG_FILE" 2>/dev/null || {
+    echo "Warning: Cannot create log file at $LOG_FILE, continuing without logging..."
+    LOG_FILE="/dev/null"
+}
 
 # Functions
 log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}" | tee -a "$LOG_FILE"
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}" | tee -a "$LOG_FILE" 2>/dev/null || echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
 
 error() {
-    echo -e "${RED}[ERROR] $1${NC}" | tee -a "$LOG_FILE"
+    echo -e "${RED}[ERROR] $1${NC}" | tee -a "$LOG_FILE" 2>/dev/null || echo -e "${RED}[ERROR] $1${NC}"
     exit 1
 }
 
 warning() {
-    echo -e "${YELLOW}[WARNING] $1${NC}" | tee -a "$LOG_FILE"
+    echo -e "${YELLOW}[WARNING] $1${NC}" | tee -a "$LOG_FILE" 2>/dev/null || echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
 info() {
-    echo -e "${BLUE}[INFO] $1${NC}" | tee -a "$LOG_FILE"
+    echo -e "${BLUE}[INFO] $1${NC}" | tee -a "$LOG_FILE" 2>/dev/null || echo -e "${BLUE}[INFO] $1${NC}"
 }
 
 # Prompt user for installation
@@ -86,8 +96,20 @@ detect_os() {
 # Check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
-        error "This script should not be run as root for security reasons"
+        error "This script should not be run as root for security reasons. Please run as a regular user. The script will use sudo when needed."
     fi
+}
+
+# Print deployment banner
+print_banner() {
+    echo ""
+    echo "🚀 A&F Laundry Management System - Production Deployment"
+    echo "========================================================="
+    echo "📅 Date: $(date)"
+    echo "🌐 Target: $HOSTNAME"
+    echo "📁 Project: openLMS"
+    echo "📝 Log file: $LOG_FILE"
+    echo ""
 }
 
 # Check system requirements
@@ -287,15 +309,23 @@ check_requirements() {
 setup_directories() {
     info "Setting up directories..."
     
+    # Create project directories in current working directory if running locally
+    if [ "$(pwd)" != "$APP_DIR" ]; then
+        mkdir -p data/{db,media,backups} logs staticfiles
+        chmod 755 data logs staticfiles 2>/dev/null || true
+        chmod 755 data/{db,media,backups} 2>/dev/null || true
+        log "Local project directories created"
+    fi
+    
+    # Create production directories (requires sudo)
     sudo mkdir -p "$APP_DIR"
     sudo mkdir -p "$BACKUP_DIR"
-    sudo mkdir -p "$(dirname "$LOG_FILE")"
     
     # Set ownership
     sudo chown -R "$USER":"$USER" "$APP_DIR"
     sudo chown -R "$USER":"$USER" "$BACKUP_DIR"
     
-    log "Directories created successfully"
+    log "Production directories created successfully"
 }
 
 # Clone or update repository
@@ -491,13 +521,47 @@ show_status() {
     echo "- Deployment log: $LOG_FILE"
     echo "- Application logs: $APP_DIR/logs/"
     echo "- Docker logs: docker-compose -f $DOCKER_COMPOSE_FILE logs"
+    echo "- Current directory logs: ./logs/"
+}
+
+# Show help information
+show_help() {
+    echo ""
+    echo "🚀 A&F Laundry Management System - Deployment Script"
+    echo "Usage: $0 [COMMAND]"
+    echo ""
+    echo "Commands:"
+    echo "  deploy     Full deployment (default)"
+    echo "  update     Update to latest version"
+    echo "  backup     Create data backup"
+    echo "  health     Run health check"
+    echo "  logs       Show application logs"
+    echo "  stop       Stop application"
+    echo "  start      Start application"
+    echo "  restart    Restart application"
+    echo "  help       Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                    # Full deployment"
+    echo "  $0 deploy            # Full deployment"
+    echo "  $0 update            # Update only"
+    echo "  $0 health            # Check health"
+    echo ""
+    echo "Configuration:"
+    echo "  Target hostname: $HOSTNAME"
+    echo "  Log file: $LOG_FILE"
+    echo "  Production directory: $APP_DIR"
+    echo ""
 }
 
 # Main deployment function
 main() {
-    log "Starting openLMS production deployment..."
-    
+    print_banner
     check_root
+    
+    log "Starting openLMS production deployment..."
+    info "Log file: $LOG_FILE"
+    
     check_requirements
     setup_directories
     setup_repository
@@ -511,12 +575,44 @@ main() {
     log "Deployment completed successfully! 🚀"
 }
 
+# Show help information
+show_help() {
+    echo ""
+    echo "🚀 A&F Laundry Management System - Deployment Script"
+    echo "Usage: $0 [COMMAND]"
+    echo ""
+    echo "Commands:"
+    echo "  deploy     Full deployment (default)"
+    echo "  update     Update to latest version"
+    echo "  backup     Create data backup"
+    echo "  health     Run health check"
+    echo "  logs       Show application logs"
+    echo "  stop       Stop application"
+    echo "  start      Start application"
+    echo "  restart    Restart application"
+    echo "  help       Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                    # Full deployment"
+    echo "  $0 deploy            # Full deployment"
+    echo "  $0 update            # Update only"
+    echo "  $0 health            # Check health"
+    echo ""
+    echo "Configuration:"
+    echo "  Target hostname: $HOSTNAME"
+    echo "  Log file: $LOG_FILE"
+    echo "  Production directory: $APP_DIR"
+    echo ""
+}
+
 # Script options
 case "${1:-deploy}" in
-    "deploy")
+    "deploy"|"")
         main
         ;;
     "update")
+        print_banner
+        check_root
         setup_repository
         backup_data
         deploy_application
@@ -524,39 +620,39 @@ case "${1:-deploy}" in
         show_status
         ;;
     "backup")
+        print_banner
+        check_root
         backup_data
         ;;
     "health")
+        print_banner
         health_check
         ;;
     "logs")
-        cd "$APP_DIR"
+        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found. Run deployment first."; }
         docker-compose -f "$DOCKER_COMPOSE_FILE" logs -f
         ;;
     "stop")
-        cd "$APP_DIR"
+        print_banner
+        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found. Run deployment first."; }
         docker-compose -f "$DOCKER_COMPOSE_FILE" down
         ;;
     "start")
-        cd "$APP_DIR"
+        print_banner
+        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found. Run deployment first."; }
         docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
         ;;
     "restart")
-        cd "$APP_DIR"
+        print_banner
+        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found. Run deployment first."; }
         docker-compose -f "$DOCKER_COMPOSE_FILE" restart
         ;;
+    "help"|"-h"|"--help")
+        show_help
+        ;;
     *)
-        echo "Usage: $0 {deploy|update|backup|health|logs|stop|start|restart}"
-        echo ""
-        echo "Commands:"
-        echo "  deploy  - Full deployment (default)"
-        echo "  update  - Update to latest version"
-        echo "  backup  - Create data backup"
-        echo "  health  - Run health check"
-        echo "  logs    - Show application logs"
-        echo "  stop    - Stop application"
-        echo "  start   - Start application"
-        echo "  restart - Restart application"
+        echo "❌ Unknown command: $1"
+        show_help
         exit 1
         ;;
 esac
