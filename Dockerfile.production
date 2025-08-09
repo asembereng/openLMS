@@ -51,21 +51,22 @@ USER app
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Create database and run migrations
-RUN python manage.py migrate
-
-# Create the superuser using management command
-RUN python manage.py ensure_superuser
-
 # Switch back to root for supervisor
 USER root
 
-# Create startup script
+# Create startup script that handles database setup at runtime
 RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Starting openLMS Production Container..."\n\
-echo "Checking database..."\n\
-python /app/manage.py migrate --noinput\n\
+echo "Setting up data directory..."\n\
+mkdir -p /app/data\n\
+chown -R app:app /app/data\n\
+echo "Running database migrations..."\n\
+su app -c "python /app/manage.py migrate --noinput"\n\
+echo "Ensuring superuser exists..."\n\
+su app -c "python /app/manage.py ensure_superuser"\n\
+echo "Initializing system settings..."\n\
+su app -c "python /app/manage.py init_system_settings" || true\n\
 echo "Starting services..."\n\
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' > /start.sh
 

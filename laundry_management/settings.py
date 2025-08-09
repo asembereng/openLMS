@@ -302,15 +302,16 @@ SPECTACULAR_SETTINGS = {
 
 # Django Allauth with robust email handling
 SITE_ID = 1
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Allow both username and email
-ACCOUNT_EMAIL_REQUIRED = False
+
+# Updated settings for django-allauth v0.54+ compatibility
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+ACCOUNT_SIGNUP_FIELDS = ['email', 'username*', 'password1*', 'password2*']  # Replaces EMAIL_REQUIRED and USERNAME_REQUIRED
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Don't require email verification if SMTP fails
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = True
 LOGIN_URL = '/accounts/auth/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/auth/login/'
