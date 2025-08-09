@@ -31,16 +31,8 @@ services:
 volumes:
   openlms_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data
   openlms_logs:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./logs
 
 networks:
   default:

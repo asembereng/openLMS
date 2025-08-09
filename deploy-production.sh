@@ -423,6 +423,10 @@ deploy_application() {
     
     cd "$APP_DIR"
     
+    # Create required directories for bind mounts
+    mkdir -p data logs staticfiles media
+    chmod 755 data logs staticfiles media 2>/dev/null || true
+    
     # Stop existing containers
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
         docker-compose -f "$DOCKER_COMPOSE_FILE" down || true
