@@ -423,6 +423,13 @@ deploy_application() {
     
     cd "$APP_DIR"
     
+    # Check if port 8080 is available for our container
+    if lsof -i :8080 > /dev/null 2>&1; then
+        echo "❌ Port 8080 is already in use. Please free it before deployment."
+        echo "To check what's using port 8080: lsof -i :8080"
+        exit 1
+    fi
+    
     # Create required directories for bind mounts
     mkdir -p data logs staticfiles media
     chmod 755 data logs staticfiles media 2>/dev/null || true
@@ -448,6 +455,50 @@ deploy_application() {
     sleep 30
     
     log "Application deployed successfully"
+}
+
+# Setup host-level Nginx reverse proxy
+setup_host_nginx() {
+    info "Setting up host-level Nginx reverse proxy..."
+    
+    # Check if nginx is installed
+    if ! command -v nginx &> /dev/null; then
+        warning "Nginx is not installed on the host system."
+        echo "Please install nginx first:"
+        echo "  Ubuntu/Debian: sudo apt-get install nginx"
+        echo "  CentOS/RHEL: sudo yum install nginx"
+        echo "  Fedora: sudo dnf install nginx"
+        return 1
+    fi
+    
+    # Copy and configure the nginx host config
+    local nginx_config="/etc/nginx/sites-available/openlms"
+    local nginx_enabled="/etc/nginx/sites-enabled/openlms"
+    
+    # Copy the template and replace hostname
+    sudo cp "$APP_DIR/nginx-host.conf" "$nginx_config"
+    sudo sed -i "s/YOUR_HOSTNAME/$HOSTNAME/g" "$nginx_config"
+    
+    # Enable the site
+    sudo ln -sf "$nginx_config" "$nginx_enabled" 2>/dev/null || true
+    
+    # Remove default nginx site if it exists
+    sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    
+    # Test nginx configuration
+    if sudo nginx -t; then
+        log "Nginx configuration test passed"
+        
+        # Reload nginx to apply changes
+        if sudo systemctl reload nginx; then
+            log "Host-level Nginx reverse proxy configured successfully"
+            info "Your application will be accessible at: http://$HOSTNAME"
+        else
+            warning "Failed to reload nginx. Please check the configuration manually."
+        fi
+    else
+        error "Nginx configuration test failed. Please check the configuration manually."
+    fi
 }
 
 # Initialize database and system
@@ -478,8 +529,8 @@ health_check() {
     
     # Try multiple URLs for health check
     health_urls=(
-        "http://localhost/health/"
-        "http://127.0.0.1/health/"
+        "http://localhost:8080/health/"
+        "http://127.0.0.1:8080/health/"
         "http://$HOSTNAME/health/"
     )
     
@@ -517,16 +568,22 @@ show_status() {
     echo "5. Monitor logs with: ./deploy-production.sh logs"
     echo ""
     info "Application URLs:"
-    echo "- Main Application: http://$HOSTNAME/"
-    echo "- Admin Panel: http://$HOSTNAME/admin/"
-    echo "- API Documentation: http://$HOSTNAME/api/docs/"
-    echo "- Health Check: http://$HOSTNAME/health/"
+    echo "- Main Application: http://$HOSTNAME/ (via host nginx)"
+    echo "- Admin Panel: http://$HOSTNAME/admin/ (via host nginx)"
+    echo "- API Documentation: http://$HOSTNAME/api/docs/ (via host nginx)"
+    echo "- Health Check: http://$HOSTNAME/health/ (via host nginx)"
+    echo ""
+    info "Direct container URLs (port 8080):"
+    echo "- Main Application: http://$HOSTNAME:8080/"
+    echo "- Admin Panel: http://$HOSTNAME:8080/admin/"
+    echo "- API Documentation: http://$HOSTNAME:8080/api/docs/"
+    echo "- Health Check: http://$HOSTNAME:8080/health/"
     echo ""
     info "Alternative URLs (if hostname resolution fails):"
-    echo "- Main Application: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")/"
-    echo "- Admin Panel: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")/admin/"
-    echo "- API Documentation: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")/api/docs/"
-    echo "- Health Check: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")/health/"
+    echo "- Main Application: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/"
+    echo "- Admin Panel: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/admin/"
+    echo "- API Documentation: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/api/docs/"
+    echo "- Health Check: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/health/"
     echo ""
     info "Log locations:"
     echo "- Deployment log: $LOG_FILE"
@@ -579,6 +636,7 @@ main() {
     setup_environment
     backup_data
     deploy_application
+    setup_host_nginx
     initialize_system
     health_check
     show_status
