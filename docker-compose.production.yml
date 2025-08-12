@@ -15,12 +15,12 @@ services:
       - ./media:/app/media
     environment:
       - DJANGO_SETTINGS_MODULE=laundry_management.settings_production
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-change-this-in-production}
-      - DJANGO_DEBUG=False
-      - DJANGO_ALLOWED_HOSTS=af.proxysolutions.io,localhost,127.0.0.1,0.0.0.0
+      - SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-change-this-in-production}
+      - DEBUG=False
+      - ALLOWED_HOSTS=af.proxysolutions.io,localhost,127.0.0.1,0.0.0.0
       - DATABASE_URL=sqlite:///data/db.sqlite3
-      - DJANGO_SECURE_SSL_REDIRECT=False
-      - DJANGO_SECURE_HSTS_SECONDS=0
+      - SECURE_SSL_REDIRECT=False
+      - SECURE_HSTS_SECONDS=0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health/"]
