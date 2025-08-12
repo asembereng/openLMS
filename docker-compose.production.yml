@@ -5,12 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.production
-    ports:
-      - "8000:80"
+    expose:
+      - "8000"
     volumes:
       # Use bind mounts instead of named volumes to avoid conflicts
       - ./data:/app/data
       - ./logs:/var/log/supervisor
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     environment:
       - DJANGO_SETTINGS_MODULE=laundry_management.settings_production
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-change-this-in-production}
@@ -18,13 +20,35 @@ services:
       - DJANGO_ALLOWED_HOSTS=af.proxysolutions.io,localhost,127.0.0.1,0.0.0.0
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
     labels:
-      - "com.docker.compose.service=openlms"
+      - "com.docker.compose.service=web"
       - "com.docker.compose.version=1.0"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  static_volume:
+  media_volume:
 
 networks:
   default:
