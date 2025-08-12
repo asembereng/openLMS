@@ -170,6 +170,20 @@ check_requirements() {
         fi
     else
         log "Docker Compose is installed"
+        
+        # Check Docker Compose version compatibility
+        compose_version=$(docker-compose --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ -n "$compose_version" ]; then
+            major_version=$(echo "$compose_version" | cut -d. -f1)
+            minor_version=$(echo "$compose_version" | cut -d. -f2)
+            
+            # Check if version is older than 1.26.0 (which has limited support for newer compose file versions)
+            if [ "$major_version" -eq 1 ] && [ "$minor_version" -lt 26 ]; then
+                warning "Docker Compose version $compose_version detected."
+                warning "Older versions may have limited support for newer compose file features."
+                info "Using compose file version 3.7 for compatibility."
+            fi
+        fi
     fi
     
     # Check Git
@@ -639,7 +653,6 @@ show_help() {
     echo "  Log file: $LOG_FILE"
     echo "  Production directory: $APP_DIR"
     echo ""
-}
     echo "  $0 deploy            # Full deployment"
     echo "  $0 update            # Update only"
     echo "  $0 health            # Check health"
