@@ -5,10 +5,11 @@ This guide explains how to set up a host-level Nginx reverse proxy for openLMS t
 ## 🎯 Architecture Overview
 
 ```
-Internet → Host Nginx (Port 80) → Docker Container (Port 8080) → Django App
+Internet → Host Nginx (Port 80) → Single Container (Port 8080) → Internal Nginx → Django
 ```
 
 ### Benefits
+- **Single Container**: Simplified deployment with Django + internal Nginx in one container
 - **Port 80 Access**: Users can access your site without specifying a port
 - **Coexistence**: Works with existing Nginx installations on port 80
 - **SSL Ready**: Easy to add SSL certificates later
@@ -97,10 +98,10 @@ sudo tail -f /var/log/nginx/error.log
 
 ### Container Management
 ```bash
-# Check container status
+# Check container status (single container)
 docker-compose -f docker-compose.production.yml ps
 
-# View container logs
+# View container logs (single container with internal services)
 docker-compose -f docker-compose.production.yml logs -f
 
 # Restart container
@@ -111,6 +112,9 @@ docker-compose -f docker-compose.production.yml down
 
 # Start container
 docker-compose -f docker-compose.production.yml up -d
+
+# Clean up old dual nginx setup
+./deploy-production.sh cleanup-containers
 ```
 
 ## 🔍 Troubleshooting
@@ -152,7 +156,17 @@ sudo tail -f /var/log/nginx/error.log
    # Find what's using port 8080
    sudo lsof -i :8080
    
-   # Kill the process or change the port in docker-compose.production.yml
+   # Stop old containers with dual nginx setup
+   ./deploy-production.sh cleanup-containers
+   ```
+
+2. **"Multiple containers running (openlms_nginx_1, openlms_web_1)"**
+   ```bash
+   # Clean up old dual nginx setup
+   ./deploy-production.sh cleanup-containers
+   
+   # Redeploy with single container architecture
+   ./deploy-production.sh deploy
    ```
 
 2. **"Nginx test failed"**

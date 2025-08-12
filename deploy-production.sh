@@ -417,11 +417,35 @@ backup_data() {
     fi
 }
 
+# Clean up old container configurations
+cleanup_old_containers() {
+    info "Cleaning up old container configurations..."
+    
+    # Stop and remove old containers with dual nginx setup
+    docker-compose -f "$DOCKER_COMPOSE_FILE" down --volumes 2>/dev/null || true
+    
+    # Remove specific old containers that might be running
+    docker rm -f openlms_nginx_1 openlms_web_1 2>/dev/null || true
+    
+    # Clean up old networks
+    docker network rm openlms_default 2>/dev/null || true
+    
+    # Clean up conflicting volumes
+    docker volume rm openlms_openlms_data openlms_openlms_logs 2>/dev/null || true
+    docker volume rm openlms_data openlms_logs 2>/dev/null || true
+    docker volume rm static_volume media_volume 2>/dev/null || true
+    
+    log "✅ Old containers and volumes cleaned up"
+}
+
 # Build and deploy with Docker
 deploy_application() {
     info "Deploying application with Docker..."
     
     cd "$APP_DIR"
+    
+    # Clean up old configurations first
+    cleanup_old_containers
     
     # Check if port 8080 is available for our container
     if lsof -i :8080 > /dev/null 2>&1; then
@@ -434,27 +458,14 @@ deploy_application() {
     mkdir -p data logs staticfiles media
     chmod 755 data logs staticfiles media 2>/dev/null || true
     
-    # Stop existing containers
-    if [ -f "$DOCKER_COMPOSE_FILE" ]; then
-        docker-compose -f "$DOCKER_COMPOSE_FILE" down || true
-    fi
-    
-    # Clean up conflicting volumes if they exist
-    info "Cleaning up any conflicting Docker volumes..."
-    docker volume rm openlms_openlms_data openlms_openlms_logs 2>/dev/null || true
-    docker volume rm openlms_data openlms_logs 2>/dev/null || true
-    
-    # Remove any containers with the old naming
-    docker rm -f openlms_openlms_1 openlms_web_1 2>/dev/null || true
-    
-    # Build and start new containers
+    # Build and start new containers with single container approach
     docker-compose -f "$DOCKER_COMPOSE_FILE" build
     docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
     
     # Wait for services to start
     sleep 30
     
-    log "Application deployed successfully"
+    log "✅ Application deployed successfully on port 8080"
 }
 
 # Setup host-level Nginx reverse proxy
@@ -560,6 +571,19 @@ show_status() {
     echo ""
     log "🎉 Deployment completed successfully!"
     echo ""
+    info "🏗️  Architecture:"
+    echo "   Internet → Host Nginx (Port 80) → Container (Port 8080) → Internal Nginx → Django"
+    echo ""
+    info "📦 Container Details:"
+    echo "   - Container Name: openlms_web_1 (single container approach)"
+    echo "   - Internal Services: Django + Gunicorn + Nginx + Supervisor"
+    echo "   - External Port: 8080"
+    echo "   - Internal Port: 80"
+    echo ""
+    info "🌐 Service Status:"
+    echo "   - Container Status: $(docker-compose -f "$DOCKER_COMPOSE_FILE" ps --services --filter status=running | wc -l)/1 services running"
+    echo "   - Host Nginx Status: $(sudo systemctl is-active nginx 2>/dev/null || echo 'inactive')"
+    echo ""
     info "Next steps:"
     echo "1. Set up SSL certificates for production: certbot --nginx -d $HOSTNAME"
     echo "2. Create admin user: docker-compose -f $DOCKER_COMPOSE_FILE exec web python manage.py createsuperuser"
@@ -567,23 +591,15 @@ show_status() {
     echo "4. Set up regular backups with: ./deploy-production.sh backup"
     echo "5. Monitor logs with: ./deploy-production.sh logs"
     echo ""
-    info "Application URLs:"
-    echo "- Main Application: http://$HOSTNAME/ (via host nginx)"
-    echo "- Admin Panel: http://$HOSTNAME/admin/ (via host nginx)"
-    echo "- API Documentation: http://$HOSTNAME/api/docs/ (via host nginx)"
-    echo "- Health Check: http://$HOSTNAME/health/ (via host nginx)"
+    info "🔗 Application URLs (Standard Port Access):"
+    echo "   - Main Application: http://$HOSTNAME/"
+    echo "   - Admin Panel: http://$HOSTNAME/admin/"
+    echo "   - API Documentation: http://$HOSTNAME/api/docs/"
+    echo "   - Health Check: http://$HOSTNAME/health/"
     echo ""
-    info "Direct container URLs (port 8080):"
-    echo "- Main Application: http://$HOSTNAME:8080/"
-    echo "- Admin Panel: http://$HOSTNAME:8080/admin/"
-    echo "- API Documentation: http://$HOSTNAME:8080/api/docs/"
-    echo "- Health Check: http://$HOSTNAME:8080/health/"
-    echo ""
-    info "Alternative URLs (if hostname resolution fails):"
-    echo "- Main Application: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/"
-    echo "- Admin Panel: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/admin/"
-    echo "- API Documentation: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/api/docs/"
-    echo "- Health Check: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/health/"
+    info "🔧 Direct Container URLs (Debug Access):"
+    echo "   - Container Health: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/health/"
+    echo "   - Container App: http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost"):8080/"
     echo ""
     info "Log locations:"
     echo "- Deployment log: $LOG_FILE"
@@ -607,10 +623,23 @@ show_help() {
     echo "  stop       Stop application"
     echo "  start      Start application"
     echo "  restart    Restart application"
+    echo "  cleanup    Full cleanup (containers, volumes, networks)"
+    echo "  cleanup-containers  Clean up only old container configurations"
     echo "  help       Show this help message"
     echo ""
     echo "Examples:"
     echo "  $0                    # Full deployment"
+    echo "  $0 deploy            # Full deployment"
+    echo "  $0 update            # Update only"
+    echo "  $0 health            # Check health"
+    echo "  $0 cleanup-containers # Clean up old dual nginx setup"
+    echo ""
+    echo "Configuration:"
+    echo "  Target hostname: $HOSTNAME"
+    echo "  Log file: $LOG_FILE"
+    echo "  Production directory: $APP_DIR"
+    echo ""
+}
     echo "  $0 deploy            # Full deployment"
     echo "  $0 update            # Update only"
     echo "  $0 health            # Check health"
@@ -644,36 +673,6 @@ main() {
     log "Deployment completed successfully! 🚀"
 }
 
-# Show help information
-show_help() {
-    echo ""
-    echo "🚀 A&F Laundry Management System - Deployment Script"
-    echo "Usage: $0 [COMMAND]"
-    echo ""
-    echo "Commands:"
-    echo "  deploy     Full deployment (default)"
-    echo "  update     Update to latest version"
-    echo "  backup     Create data backup"
-    echo "  health     Run health check"
-    echo "  logs       Show application logs"
-    echo "  stop       Stop application"
-    echo "  start      Start application"
-    echo "  restart    Restart application"
-    echo "  help       Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0                    # Full deployment"
-    echo "  $0 deploy            # Full deployment"
-    echo "  $0 update            # Update only"
-    echo "  $0 health            # Check health"
-    echo ""
-    echo "Configuration:"
-    echo "  Target hostname: $HOSTNAME"
-    echo "  Log file: $LOG_FILE"
-    echo "  Production directory: $APP_DIR"
-    echo ""
-}
-
 # Script options
 case "${1:-deploy}" in
     "deploy"|"")
@@ -695,13 +694,22 @@ case "${1:-deploy}" in
         ;;
     "cleanup")
         print_banner
-        info "Cleaning up Docker volumes and containers..."
-        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found."; }
-        docker-compose -f "$DOCKER_COMPOSE_FILE" down -v 2>/dev/null || true
-        docker volume rm openlms_openlms_data openlms_openlms_logs 2>/dev/null || true
-        docker volume rm openlms_data openlms_logs 2>/dev/null || true
+        info "Cleaning up all Docker containers, volumes, and networks..."
+        cd "$APP_DIR" 2>/dev/null || { 
+            info "Application directory $APP_DIR not found. Cleaning up from current directory..."; 
+        }
+        cleanup_old_containers
         docker system prune -f 2>/dev/null || true
-        log "Cleanup completed"
+        log "✅ Complete cleanup completed"
+        ;;
+    "cleanup-containers")
+        print_banner
+        info "Cleaning up only old container configurations..."
+        cd "$APP_DIR" 2>/dev/null || { 
+            info "Application directory $APP_DIR not found. Cleaning up from current directory..."; 
+        }
+        cleanup_old_containers
+        log "✅ Container cleanup completed"
         ;;
     "health")
         print_banner
