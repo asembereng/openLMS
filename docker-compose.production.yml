@@ -6,8 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.production
     ports:
-      - "80:80"
-      - "443:443"
+      - "8000:80"
     volumes:
       # Use bind mounts instead of named volumes to avoid conflicts
       - ./data:/app/data
