@@ -224,6 +224,14 @@ SPECTACULAR_SETTINGS = {
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Logging
+# Ensure log directory exists
+log_dir = BASE_DIR / 'data' / 'logs'
+try:
+    log_dir.mkdir(parents=True, exist_ok=True)
+except (OSError, PermissionError):
+    # If we can't create the log directory, we'll fall back to console logging
+    pass
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -242,26 +250,32 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'data' / 'logs' / 'django.log',
-            'maxBytes': 1024*1024*5,  # 5MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
     },
 }
+
+# Add file handler only if the log directory exists and is writable
+if log_dir.exists() and os.access(log_dir, os.W_OK):
+    LOGGING['handlers']['file'] = {
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': log_dir / 'django.log',
+        'maxBytes': 1024*1024*5,  # 5MB
+        'backupCount': 5,
+        'formatter': 'verbose',
+    }
+    # Add file handler to existing handlers
+    LOGGING['root']['handlers'].append('file')
+    LOGGING['loggers']['django']['handlers'].append('file')
 
 # Business Configuration
 DEFAULT_CURRENCY_SYMBOL = '₦'

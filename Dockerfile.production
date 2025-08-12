@@ -59,7 +59,7 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Starting openLMS Production Container..."\n\
 echo "Setting up data directory..."\n\
-mkdir -p /app/data\n\
+mkdir -p /app/data/logs\n\
 chown -R app:app /app/data\n\
 echo "Running database migrations..."\n\
 su app -c "python /app/manage.py migrate --noinput"\n\
