@@ -432,6 +432,14 @@ deploy_application() {
         docker-compose -f "$DOCKER_COMPOSE_FILE" down || true
     fi
     
+    # Clean up conflicting volumes if they exist
+    info "Cleaning up any conflicting Docker volumes..."
+    docker volume rm openlms_openlms_data openlms_openlms_logs 2>/dev/null || true
+    docker volume rm openlms_data openlms_logs 2>/dev/null || true
+    
+    # Remove any containers with the old naming
+    docker rm -f openlms_openlms_1 openlms_web_1 2>/dev/null || true
+    
     # Build and start new containers
     docker-compose -f "$DOCKER_COMPOSE_FILE" build
     docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
@@ -627,6 +635,16 @@ case "${1:-deploy}" in
         print_banner
         check_root
         backup_data
+        ;;
+    "cleanup")
+        print_banner
+        info "Cleaning up Docker volumes and containers..."
+        cd "$APP_DIR" 2>/dev/null || { error "Application directory $APP_DIR not found."; }
+        docker-compose -f "$DOCKER_COMPOSE_FILE" down -v 2>/dev/null || true
+        docker volume rm openlms_openlms_data openlms_openlms_logs 2>/dev/null || true
+        docker volume rm openlms_data openlms_logs 2>/dev/null || true
+        docker system prune -f 2>/dev/null || true
+        log "Cleanup completed"
         ;;
     "health")
         print_banner

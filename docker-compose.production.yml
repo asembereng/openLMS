@@ -1,7 +1,7 @@
 version: '3.3'
 
 services:
-  openlms:
+  web:
     build:
       context: .
       dockerfile: Dockerfile.production
@@ -9,15 +9,14 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Persistent data storage
-      - openlms_data:/app/data
-      # Optional: Mount logs for external access
-      - openlms_logs:/var/log/supervisor
+      # Use bind mounts instead of named volumes to avoid conflicts
+      - ./data:/app/data
+      - ./logs:/var/log/supervisor
     environment:
       - DJANGO_SETTINGS_MODULE=laundry_management.settings_production
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-change-this-in-production}
       - DJANGO_DEBUG=False
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DJANGO_ALLOWED_HOSTS=af.proxysolutions.io,localhost,127.0.0.1,0.0.0.0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health/"]
@@ -27,12 +26,6 @@ services:
     labels:
       - "com.docker.compose.service=openlms"
       - "com.docker.compose.version=1.0"
-
-volumes:
-  openlms_data:
-    driver: local
-  openlms_logs:
-    driver: local
 
 networks:
   default:
